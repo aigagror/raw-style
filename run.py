@@ -18,10 +18,12 @@ def train(sc_model, style_image):
     logging.info('started training')
 
     ds = tf.data.Dataset.from_tensor_slices([style_image])
+    callbacks = [DisplayGenImageCallback(),
+                 tf.keras.callbacks.TensorBoard(log_dir='out/logs', histogram_freq=1, write_graph=False)]
     try:
         history = sc_model.fit(ds.cache().prefetch(tf.data.AUTOTUNE).repeat(),
                                epochs=FLAGS.epochs, steps_per_epoch=FLAGS.steps_per_epoch,
-                               callbacks=DisplayGenImageCallback())
+                               callbacks=callbacks)
     except KeyboardInterrupt:
         history = None
     logging.info('finished training')
