@@ -26,9 +26,12 @@ def train(sc_model, style_image):
         pass
 
     ds = tf.data.Dataset.from_tensor_slices([style_image])
-    history = sc_model.fit(ds.cache().prefetch(tf.data.AUTOTUNE).repeat(),
-                           epochs=FLAGS.epochs, steps_per_epoch=FLAGS.steps_per_epoch,
-                           callbacks=callbacks)
+    try:
+        history = sc_model.fit(ds.cache().prefetch(tf.data.AUTOTUNE).repeat(),
+                               epochs=FLAGS.epochs, steps_per_epoch=FLAGS.steps_per_epoch,
+                               callbacks=callbacks)
+    except KeyboardInterrupt:
+        history = None
     logging.info('finished training')
     return history
 
@@ -52,7 +55,7 @@ def main(argv):
     Image.fromarray(tf.squeeze(style_model.get_gen_image()).numpy()).save('out/gen.jpg')
 
     # Plots results
-    if FLAGS.plot:
+    if FLAGS.plot and history is not None:
         plot_history(history)
 
 
