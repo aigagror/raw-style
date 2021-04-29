@@ -17,19 +17,11 @@ flags.DEFINE_bool('plot', True, 'plot the training history')
 def train(sc_model, style_image):
     logging.info('started training')
 
-    callbacks = []
-    try:
-        from google.colab import output
-        callbacks.append(DisplayGenImageCallback())
-        logging.info('loaded DisplayGenImageCallback')
-    except:
-        pass
-
     ds = tf.data.Dataset.from_tensor_slices([style_image])
     try:
         history = sc_model.fit(ds.cache().prefetch(tf.data.AUTOTUNE).repeat(),
                                epochs=FLAGS.epochs, steps_per_epoch=FLAGS.steps_per_epoch,
-                               callbacks=callbacks)
+                               callbacks=DisplayGenImageCallback())
     except KeyboardInterrupt:
         history = None
     logging.info('finished training')
@@ -47,12 +39,15 @@ def main(argv):
 
     # Make the style model
     style_model = make_style_model(style_image)
+    style_model.discriminator.summary()
 
     # Train the style model
     history = train(style_model, style_image)
 
     # Save the generated image
-    Image.fromarray(tf.squeeze(style_model.get_gen_image()).numpy()).save('out/gen.jpg')
+    out_path = 'out/gen.jpg'
+    Image.fromarray(tf.squeeze(style_model.get_gen_image()).numpy()).save(out_path)
+    logging.info(f"saved generated image to '{out_path}'")
 
     # Plots results
     if FLAGS.plot and history is not None:

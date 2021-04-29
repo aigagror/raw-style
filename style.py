@@ -2,7 +2,7 @@ from functools import partial
 
 import tensorflow as tf
 import tensorflow_addons as tfa
-from absl import flags
+from absl import flags, logging
 
 from backbones import make_karras, make_resnet152v2
 from layers import SNConv2D, StandardizeRGB, NoBatchNorm
@@ -37,14 +37,14 @@ class StyleModel(tf.keras.Model):
         else:
             assert self.gen_init == 'black'
             initializer = tf.keras.initializers.Zeros()
-        print(f'initialzed gen image with {initializer.__class__.__name__}')
+        logging.info(f'initialzed gen image with {initializer.__class__.__name__}')
         self.gen_image = self.add_weight('gen_image', [1] + input_shape[1:], initializer=initializer)
 
     def compile(self, disc_opt, gen_opt, *args, **kwargs):
         super().compile(gen_opt, *args, **kwargs)
         self.disc_opt = self._get_optimizer(disc_opt)
-        print(f'discriminator optimizer: {disc_opt.__class__.__name__}')
-        print(f'generator optimizer: {self.optimizer.__class__.__name__}')
+        logging.info(f'discriminator optimizer: {disc_opt.__class__.__name__}')
+        logging.info(f'generator optimizer: {self.optimizer.__class__.__name__}')
 
     def reinit_gen_image(self):
         self.gen_image.assign(tf.random.uniform(self.gen_image.shape, maxval=255, dtype=self.gen_image.dtype))
@@ -145,13 +145,17 @@ backbone_fn_dict = {
 def make_style_model(style_image):
     input = tf.keras.Input(tf.shape(style_image)[1:])
     x = StandardizeRGB()(input)
+
     backbone_fn = backbone_fn_dict[FLAGS.backbone]
     backbone = backbone_fn(input_tensor=x)
+
     discriminator = make_discriminator(backbone, FLAGS.layers, apply_spectral_norm=FLAGS.spectral_norm)
-    discriminator.summary()
+
     style_model = StyleModel(discriminator, gen_init='rand')
+
     disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr)
     gen_opt = tf.optimizers.Adam(FLAGS.gen_lr)
     style_model.compile(disc_opt, gen_opt, steps_per_execution=FLAGS.steps_exec)
+
     style_model.configure(style_image)
     return style_model

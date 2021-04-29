@@ -1,7 +1,7 @@
 import tensorflow as tf
 from IPython import display
 from PIL import Image
-from absl import flags
+from absl import flags, logging
 from matplotlib import pyplot as plt
 
 FLAGS = flags.FLAGS
@@ -20,22 +20,30 @@ def plot_history(history):
 class DisplayGenImageCallback(tf.keras.callbacks.Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        try:
+            from google.colab import output
+            self.output = output
+        except:
+            logging.info('Colab not available. Generated image will not display during training.')
 
     def update_image(self):
         new_image = tf.squeeze(self.model.get_gen_image())
         self.prev_image = self.curr_image
         self.curr_image = new_image
 
-        output.clear(output_tags='gen_image')
-        with output.use_tags('gen_image'):
-            a = tf.cast(self.prev_image, tf.float32)
-            b = tf.cast(self.curr_image, tf.float32)
-            delta = tf.reduce_mean(tf.math.abs(b - a), axis=-1)
-            avg_change = tf.reduce_mean(delta)
-            print(f"Mean pixel change: {float(avg_change):.3f}")
-            delta_image = Image.fromarray(tf.cast(delta, tf.uint8).numpy())
-            curr_image = Image.fromarray(self.curr_image.numpy())
-            display.display(delta_image, curr_image)
+        a = tf.cast(self.prev_image, tf.float32)
+        b = tf.cast(self.curr_image, tf.float32)
+        delta = tf.reduce_mean(tf.math.abs(b - a), axis=-1)
+        avg_change = tf.reduce_mean(delta)
+
+        if hasattr(self, 'output'):
+            self.output.clear(output_tags='gen_image')
+            with self.output.use_tags('gen_image'):
+                logging.info(f"Mean pixel change: {float(avg_change):.3f}")
+                delta_image = Image.fromarray(tf.cast(delta, tf.uint8).numpy())
+                curr_image = Image.fromarray(self.curr_image.numpy())
+                display.display(delta_image, curr_image)
+
         return avg_change
 
     def on_train_begin(self, logs=None):
@@ -54,4 +62,5 @@ def load_style_image():
     style_image = tf.keras.preprocessing.image.smart_resize(style_image, [FLAGS.image_size, FLAGS.image_size])
     style_image = tf.image.convert_image_dtype(style_image, tf.float32)
     style_image = tf.expand_dims(style_image, 0)
+    logging.info(f"loaded style image from '{FLAGS.image_path}'")
     return style_image
