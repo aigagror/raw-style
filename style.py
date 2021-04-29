@@ -17,6 +17,8 @@ flags.DEFINE_integer('steps_exec', None, 'steps per execution')
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
 
+flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the model')
+
 
 class StyleModel(tf.keras.Model):
     def __init__(self, discriminator, gen_init, *args, **kwargs):
@@ -145,7 +147,7 @@ def make_style_model(style_image):
     x = StandardizeRGB()(input)
     backbone_fn = backbone_fn_dict[FLAGS.backbone]
     backbone = backbone_fn(input_tensor=x)
-    discriminator = make_discriminator(backbone, FLAGS.layers, apply_spectral_norm=True)
+    discriminator = make_discriminator(backbone, FLAGS.layers, apply_spectral_norm=FLAGS.spectral_norm)
     discriminator.summary()
     style_model = StyleModel(discriminator, gen_init='rand')
     disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr)
