@@ -2,6 +2,7 @@ import tensorflow as tf
 from IPython import display
 from PIL import Image
 from absl import logging, flags, app
+import shutil
 
 from style import make_and_compile_style_model
 from utils import plot_history, DisplayGenImageCallback, load_style_and_gen_images
@@ -17,15 +18,19 @@ flags.DEFINE_bool('plot', True, 'plot the training history')
 def train(sc_model, style_image):
     logging.info('started training')
 
-    ds = tf.data.Dataset.from_tensor_slices([style_image])
+    shutil.rmtree('out/logs', ignore_errors=True)
     callbacks = [DisplayGenImageCallback(),
                  tf.keras.callbacks.TensorBoard(log_dir='out/logs', histogram_freq=1, write_graph=False)]
+    ds = tf.data.Dataset.from_tensor_slices([style_image])
+
     try:
         history = sc_model.fit(ds.cache().prefetch(tf.data.AUTOTUNE).repeat(),
                                epochs=FLAGS.epochs, steps_per_epoch=FLAGS.steps_per_epoch,
                                callbacks=callbacks)
     except KeyboardInterrupt:
         history = None
+        logging.info('caught keyboard interrupt. ended training early.')
+
     logging.info('finished training')
     return history
 
