@@ -21,7 +21,7 @@ def make_resnet152v2(input_tensor):
 
 
 def make_karras(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
-    x = tf.keras.layers.Conv2D(16, 1, name='conv0')(input_tensor)
+    x = tf.keras.layers.Conv2D(min(2 ** start_hdim, 512), 1, name='conv0')(input_tensor)
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.LeakyReLU(lrelu, name=f'lrelu0')(x)
 
