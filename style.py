@@ -105,7 +105,7 @@ def make_and_compile_style_model(gen_image):
 
     style_model = StyleModel(discriminator, gen_image)
 
-    disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr, FLAGS.weight_decay)
+    disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr, weight_decay_rate=FLAGS.weight_decay)
     gen_opt = tf.optimizers.Adam(FLAGS.gen_lr)
     style_model.compile(disc_opt, gen_opt, steps_per_execution=FLAGS.steps_exec)
 
