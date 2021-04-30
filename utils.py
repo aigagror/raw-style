@@ -1,6 +1,5 @@
 import tensorflow as tf
 from absl import flags, logging
-from matplotlib import pyplot as plt
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('style_path', 'images/starry_night.jpg', 'file path to the style image')
@@ -9,24 +8,11 @@ flags.DEFINE_string('gen_path', None,
 flags.DEFINE_integer('image_size', 512, 'image size')
 
 
-def plot_history(history):
-    for key, val in history.history.items():
-        plt.figure()
-        plt.plot(val, label=key)
-        plt.legend()
-    plt.show()
-
-
-class DisplayGenImageCallback(tf.keras.callbacks.Callback):
+class ImageChangeCallback(tf.keras.callbacks.Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        try:
-            from google.colab import output
-            self.output = output
-        except:
-            logging.info('Colab not available. Generated image will not display during training.')
 
-    def update_image(self):
+    def get_avg_change(self):
         new_image = tf.squeeze(self.model.get_gen_image())
         self.prev_image = self.curr_image
         self.curr_image = new_image
@@ -36,24 +22,14 @@ class DisplayGenImageCallback(tf.keras.callbacks.Callback):
         delta = tf.reduce_mean(tf.math.abs(b - a), axis=-1)
         avg_change = tf.reduce_mean(delta)
 
-        if hasattr(self, 'output'):
-            self.output.clear(output_tags='gen_image')
-            with self.output.use_tags('gen_image'):
-                logging.info(f"Mean pixel change: {float(avg_change):.3f}")
-                f, ax = plt.subplots(1, 2)
-                ax[0].imshow(tf.cast(delta, tf.uint8))
-                ax[1].imshow(self.curr_image)
-                plt.show()
-
         return avg_change
 
     def on_train_begin(self, logs=None):
         self.prev_image = tf.squeeze(self.model.get_gen_image())
         self.curr_image = tf.squeeze(self.model.get_gen_image())
-        self.update_image()
 
     def on_epoch_end(self, epoch, logs=None):
-        avg_change = self.update_image()
+        avg_change = self.get_avg_change()
         if logs is not None:
             logs['delta'] = avg_change
 
