@@ -1,19 +1,16 @@
-from functools import partial
-
 import tensorflow as tf
 import tensorflow_addons as tfa
 from absl import flags, logging
 
-from backbones import make_karras, make_resnet152v2
-from layers import SNConv2D, StandardizeRGB, NoBatchNorm
+from discriminator import make_discriminator
 
 FLAGS = flags.FLAGS
-flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras backbone is affected')
-
 flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'VGG19', 'ResNet152V2'], 'backbone of the discriminator model')
-
 flags.DEFINE_list('layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
+flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras backbone is affected')
+flags.DEFINE_float('lrelu', 0, 'Leaky ReLU parameter')
+
 flags.DEFINE_integer('steps_exec', None, 'steps per execution')
 
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
@@ -98,51 +95,11 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def attach_disc_head(input, nlayers, dropout=0, lrelu=0.2):
-    x = input
-
-    # Hidden layers
-    for _ in range(nlayers):
-        x = tf.keras.layers.Conv2D(256, 1)(x)
-        x = tf.keras.layers.Dropout(dropout)(x)
-        x = tf.keras.layers.LeakyReLU(lrelu)(x)
-
-    # Last layer
-    x = tf.keras.layers.Conv2D(1, 1)(x)
-
-    return x
-
-
-def make_discriminator(backbone, layers, apply_spectral_norm):
-    # Get layer outputs
-    outputs = [attach_disc_head(backbone.get_layer(layer).output, nlayers=0, dropout=FLAGS.dropout)
-               for layer in layers]
-    discriminator = tf.keras.Model(backbone.input, outputs)
-
-    # Apply spectral norm to linear layers
-    if apply_spectral_norm:
-        discriminator = tf.keras.Model().from_config(discriminator.get_config(),
-                                                     custom_objects={'Conv2D': SNConv2D,
-                                                                     'StandardizeRGB': StandardizeRGB,
-                                                                     'BatchNormalization': NoBatchNorm})
-
-    return discriminator
-
-
 def make_and_compile_style_model(gen_image):
-    backbone_fn_dict = {
-        'Karras': partial(make_karras, dropout=FLAGS.dropout),
-        'ResNet152V2': make_resnet152v2,
-        'VGG19': partial(tf.keras.applications.VGG19, weights=None)
-    }
+    input_shape = tf.shape(gen_image)[1:]
 
-    input = tf.keras.Input(tf.shape(gen_image)[1:])
-    x = StandardizeRGB()(input)
-
-    backbone_fn = backbone_fn_dict[FLAGS.backbone]
-    backbone = backbone_fn(input_tensor=x)
-
-    discriminator = make_discriminator(backbone, FLAGS.layers, apply_spectral_norm=FLAGS.spectral_norm)
+    discriminator = make_discriminator(input_shape, FLAGS.backbone, FLAGS.layers,
+                                       FLAGS.spectral_norm, FLAGS.dropout, FLAGS.lrelu)
 
     style_model = StyleModel(discriminator, gen_image)
 

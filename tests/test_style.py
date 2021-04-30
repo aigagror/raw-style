@@ -4,19 +4,19 @@ from absl import flags
 from absl.testing import absltest
 from tensorflow import python as tf_python
 
-from backbones import make_karras, make_resnet152v2
+from discriminator import make_discriminator
 from layers import NoBatchNorm
-from style import make_discriminator
 
 FLAGS = flags.FLAGS
 
 
 class TestStyle(absltest.TestCase):
     def test_spectral_norm(self):
-        backbone = make_karras(tf.keras.Input([32, 32, 3]))
+        input_shape = [32, 32, 3]
+        backbone = 'Karras'
         layers = ['conv0']
         for spectral_norm in [True, False]:
-            discriminator = make_discriminator(backbone, layers, apply_spectral_norm=spectral_norm)
+            discriminator = make_discriminator(input_shape, backbone, layers, spectral_norm)
             for layer in discriminator.layers:
                 if hasattr(layer, 'kernel'):
                     if spectral_norm:
@@ -25,10 +25,11 @@ class TestStyle(absltest.TestCase):
                         self.assertNotIsInstance(layer, tfa.layers.SpectralNormalization)
 
     def test_no_batch_norm(self):
-        backbone = make_resnet152v2(tf.keras.Input([224, 224, 3]))
+        input_shape = [224, 224, 3]
+        backbone = 'ResNet152V2'
         layers = ['conv2_block1_out']
         for spectral_norm in [False, True]:
-            discriminator = make_discriminator(backbone, layers, apply_spectral_norm=spectral_norm)
+            discriminator = make_discriminator(input_shape, backbone, layers, spectral_norm)
             discriminator.summary()
 
             num_batch_norms, num_no_batch_norms = 0, 0
