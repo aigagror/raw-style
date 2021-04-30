@@ -52,11 +52,12 @@ class StyleModel(tf.keras.Model):
                 d_acc = self._disc_bce_acc(logits)
 
             # Generation loss
-            if isinstance(logits, list):
-                g_loss = [self._gen_bce_loss(l) for l in logits]
+            gen_logits = self(self.gen_image, training=False)
+            if isinstance(gen_logits, list):
+                g_loss = [self._gen_bce_loss(l) for l in gen_logits]
                 g_loss = tf.reduce_sum(g_loss)
             else:
-                g_loss = self._gen_bce_loss(logits)
+                g_loss = self._gen_bce_loss(gen_logits)
 
         # Optimize generated image
         grad = tape.gradient(g_loss, [self.gen_image])
@@ -74,8 +75,8 @@ class StyleModel(tf.keras.Model):
     def get_gen_image(self):
         return tf.constant(tf.cast(self.gen_image, tf.uint8))
 
-    def _gen_bce_loss(self, logits):
-        g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(logits[1]), logits[1]))
+    def _gen_bce_loss(self, gen_logits):
+        g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(gen_logits), gen_logits))
         return g_loss
 
     def _disc_bce_acc(self, logits):
