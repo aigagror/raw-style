@@ -44,6 +44,7 @@ def main(argv):
     f, ax = plt.subplots(1, 2)
     ax[0].imshow(tf.squeeze(tf.cast(gen_image, tf.uint8)))
     ax[1].imshow(tf.squeeze(tf.cast(style_image, tf.uint8)))
+    plt.show()
 
     # Make the style model
     style_model = make_and_compile_style_model(gen_image)

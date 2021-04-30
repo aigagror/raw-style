@@ -43,6 +43,7 @@ class DisplayGenImageCallback(tf.keras.callbacks.Callback):
                 f, ax = plt.subplots(1, 2)
                 ax[0].imshow(tf.cast(delta, tf.uint8))
                 ax[1].imshow(self.curr_image)
+                plt.show()
 
         return avg_change
 
