@@ -8,8 +8,7 @@ from backbones import make_karras, make_resnet152v2
 from layers import SNConv2D, StandardizeRGB, NoBatchNorm
 
 FLAGS = flags.FLAGS
-flags.DEFINE_float('dropout', 0,
-                   'dropout rate. probability that a feature is zero-ed out. only the Karras backbone is affected')
+flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras backbone is affected')
 
 flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'VGG19', 'ResNet152V2'], 'backbone of the discriminator model')
 
