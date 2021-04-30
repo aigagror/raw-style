@@ -1,9 +1,9 @@
 import shutil
 
 import tensorflow as tf
-from IPython import display
 from PIL import Image
 from absl import logging, flags, app
+import matplotlib.pyplot as plt
 
 from style import make_and_compile_style_model
 from utils import plot_history, DisplayGenImageCallback, load_style_and_gen_images
@@ -12,8 +12,6 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('epochs', 100, 'epochs')
 flags.DEFINE_integer('steps_per_epoch', 1000, 'steps_per_epoch')
-
-flags.DEFINE_bool('plot', True, 'plot the training history')
 
 
 def train(sc_model, style_image):
@@ -43,7 +41,7 @@ def main(argv):
 
     # Load the images
     style_image, gen_image = load_style_and_gen_images()
-    display.display(Image.fromarray(tf.squeeze(tf.cast(style_image, tf.uint8)).numpy()))
+    plt.imshow(tf.squeeze(tf.cast(style_image, tf.uint8)))
 
     # Make the style model
     style_model = make_and_compile_style_model(gen_image)
@@ -58,7 +56,7 @@ def main(argv):
     logging.info(f"saved generated image to '{out_path}'")
 
     # Plots results
-    if FLAGS.plot and history is not None:
+    if history is not None:
         plot_history(history)
 
 

@@ -1,6 +1,4 @@
 import tensorflow as tf
-from IPython import display
-from PIL import Image
 from absl import flags, logging
 from matplotlib import pyplot as plt
 
@@ -42,9 +40,9 @@ class DisplayGenImageCallback(tf.keras.callbacks.Callback):
             self.output.clear(output_tags='gen_image')
             with self.output.use_tags('gen_image'):
                 logging.info(f"Mean pixel change: {float(avg_change):.3f}")
-                delta_image = Image.fromarray(tf.cast(delta, tf.uint8).numpy())
-                curr_image = Image.fromarray(self.curr_image.numpy())
-                display.display(delta_image, curr_image)
+                f, ax = plt.subplots(1, 2)
+                ax[0].imshow(tf.cast(delta, tf.uint8))
+                ax[1].imshow(self.curr_image)
 
         return avg_change
 
