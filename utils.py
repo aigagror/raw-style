@@ -32,6 +32,7 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         avg_change = self.get_avg_change()
         if logs is not None:
             logs['delta'] = avg_change
+        logging.info(f'average pixel change: {avg_change:.3f}')
 
 
 def load_and_resize_image(image_path, image_size):
