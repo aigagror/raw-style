@@ -21,24 +21,11 @@ flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all li
 
 
 class StyleModel(tf.keras.Model):
-    def __init__(self, discriminator, gen_init, *args, **kwargs):
+    def __init__(self, discriminator, gen_image, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.discriminator = discriminator
-        self.gen_init = gen_init
+        self.gen_image = tf.Variable(gen_image, trainable=True, name='gen_image', dtype=self.dtype)
         self.bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
-
-    def configure(self, style_image):
-        # Call to build gen image
-        self(style_image)
-
-    def build(self, input_shape):
-        if self.gen_init == 'rand':
-            initializer = tf.keras.initializers.RandomUniform(minval=0, maxval=255)
-        else:
-            assert self.gen_init == 'black'
-            initializer = tf.keras.initializers.Zeros()
-        logging.info(f'initialzed gen image with {initializer.__class__.__name__}')
-        self.gen_image = self.add_weight('gen_image', [1] + input_shape[1:], initializer=initializer)
 
     def compile(self, disc_opt, gen_opt, *args, **kwargs):
         super().compile(gen_opt, *args, **kwargs)
@@ -142,8 +129,8 @@ backbone_fn_dict = {
 }
 
 
-def make_style_model(style_image):
-    input = tf.keras.Input(tf.shape(style_image)[1:])
+def make_and_compile_style_model(gen_image):
+    input = tf.keras.Input(tf.shape(gen_image)[1:])
     x = StandardizeRGB()(input)
 
     backbone_fn = backbone_fn_dict[FLAGS.backbone]
@@ -151,11 +138,10 @@ def make_style_model(style_image):
 
     discriminator = make_discriminator(backbone, FLAGS.layers, apply_spectral_norm=FLAGS.spectral_norm)
 
-    style_model = StyleModel(discriminator, gen_init='rand')
+    style_model = StyleModel(discriminator, gen_image)
 
     disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr)
     gen_opt = tf.optimizers.Adam(FLAGS.gen_lr)
     style_model.compile(disc_opt, gen_opt, steps_per_execution=FLAGS.steps_exec)
 
-    style_model.configure(style_image)
     return style_model

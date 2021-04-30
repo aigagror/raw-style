@@ -5,7 +5,8 @@ from absl import flags, logging
 from matplotlib import pyplot as plt
 
 FLAGS = flags.FLAGS
-flags.DEFINE_string('image_path', 'images/starry_night.jpg', 'file path to the style image')
+flags.DEFINE_string('style_path', 'images/starry_night.jpg', 'file path to the style image')
+flags.DEFINE_string('gen_path', None, 'file path to the generated image. If None, a uniform randomly generated image is used.')
 flags.DEFINE_integer('image_size', 512, 'image size')
 
 
@@ -57,10 +58,24 @@ class DisplayGenImageCallback(tf.keras.callbacks.Callback):
             logs['delta'] = avg_change
 
 
-def load_style_image():
-    style_image = tf.image.decode_image(tf.io.read_file(FLAGS.image_path))
-    style_image = tf.keras.preprocessing.image.smart_resize(style_image, [FLAGS.image_size, FLAGS.image_size])
-    style_image = tf.image.convert_image_dtype(style_image, tf.float32)
-    style_image = tf.expand_dims(style_image, 0)
-    logging.info(f"loaded style image from '{FLAGS.image_path}'")
-    return style_image
+def load_and_resize_image(image_path, image_size):
+    image = tf.image.decode_image(tf.io.read_file(image_path))
+    image = tf.keras.preprocessing.image.smart_resize(image, [image_size, image_size])
+    image = tf.image.convert_image_dtype(image, tf.float32)
+    image = tf.expand_dims(image, 0)
+    return image
+
+
+def load_style_and_gen_images():
+    style_image = load_and_resize_image(FLAGS.style_path, FLAGS.image_size)
+    logging.info(f"loaded style image from '{FLAGS.style_path}'")
+
+    if FLAGS.gen_path is not None:
+        gen_image = load_and_resize_image(FLAGS.gen_path, FLAGS.image_size)
+        logging.info(f"loaded generated image from '{FLAGS.gen_path}'")
+    else:
+        gen_image = tf.random.uniform([1, FLAGS.image_size, FLAGS.image_size, 3], maxval=256, dtype=tf.int32)
+        gen_image = tf.cast(gen_image, tf.float32)
+        logging.info(f"generated image initialized as random uniform")
+
+    return style_image, gen_image

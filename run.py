@@ -3,8 +3,8 @@ from IPython import display
 from PIL import Image
 from absl import logging, flags, app
 
-from style import make_style_model
-from utils import plot_history, DisplayGenImageCallback, load_style_image
+from style import make_and_compile_style_model
+from utils import plot_history, DisplayGenImageCallback, load_style_and_gen_images
 
 FLAGS = flags.FLAGS
 
@@ -35,12 +35,12 @@ def main(argv):
 
     logging.set_verbosity('info')
 
-    # Load the image
-    style_image = load_style_image()
+    # Load the images
+    style_image, gen_image = load_style_and_gen_images()
     display.display(Image.fromarray(tf.squeeze(tf.cast(style_image, tf.uint8)).numpy()))
 
     # Make the style model
-    style_model = make_style_model(style_image)
+    style_model = make_and_compile_style_model(gen_image)
     style_model.discriminator.summary()
 
     # Train the style model
