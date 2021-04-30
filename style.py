@@ -8,8 +8,11 @@ from backbones import make_karras, make_resnet152v2
 from layers import SNConv2D, StandardizeRGB, NoBatchNorm
 
 FLAGS = flags.FLAGS
+flags.DEFINE_float('dropout', 0,
+                   'dropout rate. probability that a feature is zero-ed out. only the Karras backbone is affected')
 
 flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'VGG19', 'ResNet152V2'], 'backbone of the discriminator model')
+
 flags.DEFINE_list('layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
 flags.DEFINE_integer('steps_exec', None, 'steps per execution')
@@ -96,13 +99,13 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def attach_disc_head(input, nlayers, lrelu=0.2):
+def attach_disc_head(input, nlayers, dropout=0, lrelu=0.2):
     x = input
-    hdim = input.shape[-1]
 
     # Hidden layers
     for _ in range(nlayers):
         x = tf.keras.layers.Conv2D(256, 1)(x)
+        x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu)(x)
 
     # Last layer
@@ -113,7 +116,8 @@ def attach_disc_head(input, nlayers, lrelu=0.2):
 
 def make_discriminator(backbone, layers, apply_spectral_norm):
     # Get layer outputs
-    outputs = [attach_disc_head(backbone.get_layer(layer).output, nlayers=0) for layer in layers]
+    outputs = [attach_disc_head(backbone.get_layer(layer).output, nlayers=0, dropout=FLAGS.dropout)
+               for layer in layers]
     discriminator = tf.keras.Model(backbone.input, outputs)
 
     # Apply spectral norm to linear layers
@@ -126,14 +130,13 @@ def make_discriminator(backbone, layers, apply_spectral_norm):
     return discriminator
 
 
-backbone_fn_dict = {
-    'Karras': make_karras,
-    'ResNet152V2': make_resnet152v2,
-    'VGG19': partial(tf.keras.applications.VGG19, weights=None)
-}
-
-
 def make_and_compile_style_model(gen_image):
+    backbone_fn_dict = {
+        'Karras': partial(make_karras, dropout=FLAGS.dropout),
+        'ResNet152V2': make_resnet152v2,
+        'VGG19': partial(tf.keras.applications.VGG19, weights=None)
+    }
+
     input = tf.keras.Input(tf.shape(gen_image)[1:])
     x = StandardizeRGB()(input)
 

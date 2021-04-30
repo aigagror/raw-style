@@ -35,7 +35,6 @@ def train(sc_model, style_image):
 
 def main(argv):
     del argv  # Unused
-
     logging.set_verbosity('info')
 
     # Load the images
@@ -46,7 +45,7 @@ def main(argv):
     style_model.discriminator.summary()
 
     # Train the style model
-    history = train(style_model, style_image)
+    train(style_model, style_image)
 
     # Save the generated image
     out_path = 'out/gen.jpg'
