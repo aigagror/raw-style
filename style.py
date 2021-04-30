@@ -14,6 +14,7 @@ flags.DEFINE_float('lrelu', 0, 'Leaky ReLU parameter')
 flags.DEFINE_integer('steps_exec', None, 'steps per execution')
 
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
+flags.DEFINE_float('weight_decay', 1e-2, 'discriminator weight decay')
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
 
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the model')
@@ -104,7 +105,7 @@ def make_and_compile_style_model(gen_image):
 
     style_model = StyleModel(discriminator, gen_image)
 
-    disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr)
+    disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr, FLAGS.weight_decay)
     gen_opt = tf.optimizers.Adam(FLAGS.gen_lr)
     style_model.compile(disc_opt, gen_opt, steps_per_execution=FLAGS.steps_exec)
 
