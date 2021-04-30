@@ -3,7 +3,7 @@ import tensorflow_addons as tfa
 
 
 class StandardizeRGB(tf.keras.layers.Layer):
-    def call(self, inputs):
+    def call(self, inputs, *args, **kwargs):
         return (inputs - 128) / 64
 
 
@@ -17,3 +17,12 @@ class SNConv2D(tfa.layers.SpectralNormalization):
 class NoBatchNorm(tf.keras.layers.Activation):
     def __init__(self, *args, **kwargs):
         super().__init__('linear')
+
+class MeasureFeats(tf.keras.layers.Layer):
+    def call(self, inputs, *args, **kwargs):
+        norms = tf.norm(inputs, axis=-1)
+        mean, std = tf.nn.moments(inputs, axes=None)
+        self.add_metric(tf.reduce_mean(norms), f'{self.name}.norm')
+        self.add_metric(mean, f'{self.name}.mean')
+        self.add_metric(std, f'{self.name}.std')
+        return inputs

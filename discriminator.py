@@ -5,7 +5,7 @@ from absl import flags
 from tensorflow.python.keras.applications import resnet
 from tensorflow.python.keras.utils import layer_utils
 
-from layers import SNConv2D, StandardizeRGB, NoBatchNorm
+from layers import SNConv2D, StandardizeRGB, NoBatchNorm, MeasureFeats
 
 FLAGS = flags.FLAGS
 
@@ -22,12 +22,14 @@ def make_resnet152v2(input_tensor):
 
 def make_karras(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
     x = tf.keras.layers.Conv2D(min(2 ** start_hdim, 512), 1, name='conv0')(input_tensor)
+    x = MeasureFeats(name='conv0_out')(x)
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.LeakyReLU(lrelu, name=f'lrelu0')(x)
 
     for i, j in enumerate(range(start_hdim, start_hdim + 8)):
         h1, h2 = min(2 ** j, 512), min(2 ** (j + 1), 512)
         x = tf.keras.layers.Conv2D(h1, 3, padding='same', name=f'block{i + 1}_conv1')(x)
+        x = MeasureFeats(name=f'block{i+1}_conv1_out')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu1')(x)
 
@@ -83,6 +85,7 @@ def make_discriminator(input_shape, backbone, layers, apply_spectral_norm=True, 
         discriminator = tf.keras.Model().from_config(discriminator.get_config(),
                                                      custom_objects={'Conv2D': SNConv2D,
                                                                      'StandardizeRGB': StandardizeRGB,
-                                                                     'BatchNormalization': NoBatchNorm})
+                                                                     'BatchNormalization': NoBatchNorm,
+                                                                     'MeasureFeats': MeasureFeats})
 
     return discriminator
