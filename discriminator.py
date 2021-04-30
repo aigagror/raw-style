@@ -25,8 +25,8 @@ def make_karras(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.LeakyReLU(lrelu, name=f'lrelu0')(x)
 
-    for i in range(start_hdim, start_hdim + 8):
-        h1, h2 = min(2 ** i, 512), min(2 ** (i + 1), 512)
+    for i, j in enumerate(range(start_hdim, start_hdim + 8)):
+        h1, h2 = min(2 ** j, 512), min(2 ** (j + 1), 512)
         x = tf.keras.layers.Conv2D(h1, 3, padding='same', name=f'block{i + 1}_conv1')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu1')(x)
