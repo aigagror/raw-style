@@ -6,7 +6,8 @@ from matplotlib import pyplot as plt
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('style_path', 'images/starry_night.jpg', 'file path to the style image')
-flags.DEFINE_string('gen_path', None, 'file path to the generated image. If None, a uniform randomly generated image is used.')
+flags.DEFINE_string('gen_path', None,
+                    'file path to the generated image. If None, a uniform randomly generated image is used.')
 flags.DEFINE_integer('image_size', 512, 'image size')
 
 

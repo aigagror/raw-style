@@ -1,6 +1,8 @@
-from absl.testing import absltest
-from style import StyleModel
 import tensorflow as tf
+from absl.testing import absltest
+
+from style import StyleModel
+
 
 class TestTrainSteps(absltest.TestCase):
     def make_style_model(self, gen_image):

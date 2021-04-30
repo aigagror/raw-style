@@ -1,8 +1,9 @@
+import shutil
+
 import tensorflow as tf
 from IPython import display
 from PIL import Image
 from absl import logging, flags, app
-import shutil
 
 from style import make_and_compile_style_model
 from utils import plot_history, DisplayGenImageCallback, load_style_and_gen_images

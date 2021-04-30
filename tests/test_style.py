@@ -2,11 +2,11 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from absl import flags
 from absl.testing import absltest
+from tensorflow import python as tf_python
 
 from backbones import make_karras, make_resnet152v2
-from style import make_discriminator
 from layers import NoBatchNorm
-from tensorflow import python as tf_python
+from style import make_discriminator
 
 FLAGS = flags.FLAGS
 
@@ -34,7 +34,7 @@ class TestStyle(absltest.TestCase):
             num_batch_norms, num_no_batch_norms = 0, 0
             for layer in discriminator.layers:
                 if isinstance(layers, tf.keras.layers.BatchNormalization) or \
-                   isinstance(layer, tf_python.keras.layers.normalization_v2.BatchNormalization):
+                        isinstance(layer, tf_python.keras.layers.normalization_v2.BatchNormalization):
                     num_batch_norms += 1
                 if isinstance(layer, NoBatchNorm):
                     num_no_batch_norms += 1
