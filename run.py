@@ -41,7 +41,9 @@ def main(argv):
 
     # Load the images
     style_image, gen_image = load_style_and_gen_images()
-    plt.imshow(tf.squeeze(tf.cast(style_image, tf.uint8)))
+    f, ax = plt.subplots(1, 2)
+    ax[0].imshow(tf.squeeze(tf.cast(gen_image, tf.uint8)))
+    ax[1].imshow(tf.squeeze(tf.cast(style_image, tf.uint8)))
 
     # Make the style model
     style_model = make_and_compile_style_model(gen_image)
