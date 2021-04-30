@@ -46,7 +46,7 @@ class StyleModel(tf.keras.Model):
                 d_acc = [self._disc_bce_acc(l) for l in logits]
                 d_loss = [self._disc_bce_loss(l) for l in logits]
 
-                d_acc = tf.reduce_sum(d_acc)
+                d_acc = tf.reduce_mean(d_acc)
                 d_loss = tf.reduce_sum(d_loss)
             else:
                 d_loss = self._disc_bce_loss(logits)
