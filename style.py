@@ -5,7 +5,8 @@ from absl import flags, logging
 from discriminator import make_discriminator
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'VGG19', 'ResNet152V2'], 'backbone of the discriminator model')
+flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'BigKarras', 'VGG19', 'ResNet152V2'],
+                  'backbone of the discriminator model')
 flags.DEFINE_list('layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
 flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras backbone is affected')

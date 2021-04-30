@@ -20,13 +20,13 @@ def make_resnet152v2(input_tensor):
     return tf.keras.Model(layer_utils.get_source_inputs(input_tensor), x)
 
 
-def make_karras(input_tensor, dropout=0, lrelu=0.2):
+def make_karras(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
     x = tf.keras.layers.Conv2D(16, 1, name='conv0')(input_tensor)
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.LeakyReLU(lrelu, name=f'lrelu0')(x)
 
-    for i, (h1, h2) in enumerate([(16, 32), (32, 64), (64, 128), (128, 256),
-                                  (256, 512), (512, 512), (512, 512), (512, 512)]):
+    for i in range(start_hdim, start_hdim + 8):
+        h1, h2 = min(2 ** i, 512), min(2 ** (i + 1), 512)
         x = tf.keras.layers.Conv2D(h1, 3, padding='same', name=f'block{i + 1}_conv1')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu1')(x)
@@ -64,6 +64,7 @@ def make_discriminator(input_shape, backbone, layers, apply_spectral_norm=True, 
 
     backbone_fn_dict = {
         'Karras': partial(make_karras, dropout=dropout, lrelu=lrelu),
+        'BigKarras': partial(make_karras, start_hdim=6, dropout=dropout, lrelu=lrelu),
         'ResNet152V2': make_resnet152v2,
         'VGG19': partial(tf.keras.applications.VGG19, weights=None)
     }
