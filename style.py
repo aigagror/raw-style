@@ -33,9 +33,6 @@ class StyleModel(tf.keras.Model):
         logging.info(f'discriminator optimizer: {disc_opt.__class__.__name__}')
         logging.info(f'generator optimizer: {self.optimizer.__class__.__name__}')
 
-    def reinit_gen_image(self):
-        self.gen_image.assign(tf.random.uniform(self.gen_image.shape, maxval=255, dtype=self.gen_image.dtype))
-
     def call(self, image, training=None, mask=None):
         return self.discriminator(image, training=training)
 
@@ -46,34 +43,21 @@ class StyleModel(tf.keras.Model):
 
             # Discriminator
             if isinstance(logits, list):
-                style_logits = [l[0] for l in logits]
-                gen_logits = [l[1] for l in logits]
+                d_acc = [self._disc_bce_acc(l) for l in logits]
+                d_loss = [self._disc_bce_loss(l) for l in logits]
 
-                d_loss, d_acc = 0, 0
-                for rl, gl in zip(style_logits, gen_logits):
-                    d_loss += tf.reduce_mean(self.bce_loss(tf.ones_like(rl), rl) + self.bce_loss(tf.zeros_like(gl), gl))
-                    d_acc += tf.reduce_mean(tf.keras.metrics.binary_accuracy(tf.ones_like(rl), rl, threshold=0))
-                    d_acc += tf.reduce_mean(tf.keras.metrics.binary_accuracy(tf.zeros_like(gl), gl, threshold=0))
-                d_acc /= (len(style_logits) * 2)
+                d_acc = tf.reduce_sum(d_acc)
+                d_loss = tf.reduce_sum(d_loss)
             else:
-                style_logits, gen_logits = logits[0], logits[1]
-
-                real_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(style_logits), style_logits))
-                gen_loss = tf.reduce_mean(self.bce_loss(tf.zeros_like(gen_logits), gen_logits))
-                d_loss = real_loss + gen_loss
-
-                real_acc = tf.reduce_mean(
-                    tf.keras.metrics.binary_accuracy(tf.ones_like(style_logits), style_logits, threshold=0))
-                gen_acc = tf.reduce_mean(
-                    tf.keras.metrics.binary_accuracy(tf.zeros_like(gen_logits), gen_logits, threshold=0))
-                d_acc = 0.5 * real_acc + 0.5 * gen_acc
+                d_loss = self._disc_bce_loss(logits)
+                d_acc = self._disc_bce_acc(logits)
 
             # Generation loss
-            if isinstance(gen_logits, list):
-                g_loss = [tf.reduce_mean(self.bce_loss(tf.ones_like(logits), logits)) for logits in gen_logits]
+            if isinstance(logits, list):
+                g_loss = [self._gen_bce_loss(l) for l in logits]
                 g_loss = tf.reduce_sum(g_loss)
             else:
-                g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(gen_logits), gen_logits))
+                g_loss = self._gen_bce_loss(logits)
 
         # Optimize generated image
         grad = tape.gradient(g_loss, [self.gen_image])
@@ -86,10 +70,30 @@ class StyleModel(tf.keras.Model):
         d_grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.disc_opt.apply_gradients(zip(d_grads, self.discriminator.trainable_weights))
 
-        return {'d_loss': d_loss, 'd_acc': d_acc}
+        return {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss}
 
     def get_gen_image(self):
         return tf.constant(tf.cast(self.gen_image, tf.uint8))
+
+    def _gen_bce_loss(self, logits):
+        g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(logits[1]), logits[1]))
+        return g_loss
+
+    def _disc_bce_acc(self, logits):
+        style_logits, gen_logits = logits[0], logits[1]
+        real_acc = tf.reduce_mean(
+            tf.keras.metrics.binary_accuracy(tf.ones_like(style_logits), style_logits, threshold=0))
+        gen_acc = tf.reduce_mean(
+            tf.keras.metrics.binary_accuracy(tf.zeros_like(gen_logits), gen_logits, threshold=0))
+        d_acc = 0.5 * real_acc + 0.5 * gen_acc
+        return d_acc
+
+    def _disc_bce_loss(self, logits):
+        style_logits, gen_logits = logits[0], logits[1]
+        real_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(style_logits), style_logits))
+        gen_loss = tf.reduce_mean(self.bce_loss(tf.zeros_like(gen_logits), gen_logits))
+        d_loss = real_loss + gen_loss
+        return d_loss
 
 
 def attach_disc_head(input, nlayers, lrelu=0.2):
