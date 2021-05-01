@@ -1,5 +1,6 @@
 import tensorflow as tf
 from absl import flags, logging
+import shutil, os
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('style_path', 'images/starry_night.jpg', 'file path to the style image')
@@ -13,6 +14,8 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         super().__init__(*args, **kwargs)
         file_writer = tf.summary.create_file_writer('out/logs/train')
         file_writer.set_as_default()
+        shutil.rmtree('out/tmp', ignore_errors=True)
+        os.mkdir('out/tmp')
 
     def get_avg_change(self):
         new_image = tf.squeeze(self.model.get_gen_image())
@@ -36,6 +39,7 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
             logs['delta'] = avg_change
         logging.info(f'average pixel change: {avg_change:.3f}')
         tf.summary.scalar('average pixel change', data=avg_change, step=epoch)
+        tf.io.write_file(f'out/tmp/{epoch}.jpg', tf.io.encode_jpeg(self.curr_image))
 
 
 def load_and_resize_image(image_path, image_size):
