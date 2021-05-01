@@ -98,6 +98,6 @@ def make_and_compile_style_model(gen_image, discriminator, disc_lr, weight_decay
 
 
 def make_gen_lr_schedule(gen_lr, gen_delay):
-    boundaries, values = [gen_delay], [0, gen_lr]
+    boundaries, values = [gen_delay], [0.0, gen_lr]
     gen_lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
     return gen_lr_schedule
