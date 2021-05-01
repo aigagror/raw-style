@@ -16,6 +16,7 @@ flags.DEFINE_integer('steps_exec', None, 'steps per execution')
 
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
 flags.DEFINE_float('weight_decay', 1e-2, 'discriminator weight decay')
+flags.DEFINE_integer('gen_delay', 0, 'delay the optimization of the generated image by [gen_delay] epochs')
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
 
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the model')
@@ -107,7 +108,9 @@ def make_and_compile_style_model(gen_image):
     style_model = StyleModel(discriminator, gen_image)
 
     disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr, weight_decay_rate=FLAGS.weight_decay)
-    gen_opt = tf.optimizers.Adam(FLAGS.gen_lr)
+    boundaries, values = [FLAGS.gen_delay * FLAGS.steps_per_epoch], [0, FLAGS.gen_lr]
+    gen_lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
+    gen_opt = tf.optimizers.Adam(gen_lr_schedule)
     style_model.compile(disc_opt, gen_opt, steps_per_execution=FLAGS.steps_exec)
 
     return style_model
