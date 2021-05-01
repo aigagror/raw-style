@@ -1,25 +1,6 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
-from absl import flags, logging
-
-from discriminator import make_discriminator
-
-FLAGS = flags.FLAGS
-flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'BigKarras', 'VGG19', 'ResNet152V2'],
-                  'backbone of the discriminator model')
-flags.DEFINE_list('layers', [f'block{i}_lrelu1' for i in range(1, 4)],
-                  'names of the layers to use as output for the style features')
-flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras backbone is affected')
-flags.DEFINE_float('lrelu', 0, 'Leaky ReLU parameter')
-
-flags.DEFINE_integer('steps_exec', None, 'steps per execution')
-
-flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
-flags.DEFINE_float('weight_decay', 1e-2, 'discriminator weight decay')
-flags.DEFINE_integer('gen_delay', 0, 'delay the optimization of the generated image by [gen_delay] epochs')
-flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
-
-flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the model')
+from absl import logging
 
 
 class StyleModel(tf.keras.Model):
@@ -99,18 +80,24 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def make_and_compile_style_model(gen_image):
-    input_shape = tf.shape(gen_image)[1:]
-
-    discriminator = make_discriminator(input_shape, FLAGS.backbone, FLAGS.layers,
-                                       FLAGS.spectral_norm, FLAGS.dropout, FLAGS.lrelu)
-
+def make_and_compile_style_model(gen_image, discriminator, disc_lr, weight_decay, gen_lr, gen_delay, steps_exec=None):
+    # Style model
     style_model = StyleModel(discriminator, gen_image)
 
-    disc_opt = tfa.optimizers.LAMB(FLAGS.disc_lr, weight_decay_rate=FLAGS.weight_decay)
-    boundaries, values = [FLAGS.gen_delay * FLAGS.steps_per_epoch], [0, FLAGS.gen_lr]
-    gen_lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
+    # Discriminator optimizer
+    disc_opt = tfa.optimizers.LAMB(disc_lr, weight_decay_rate=weight_decay)
+
+    # Generator optimizer
+    gen_lr_schedule = make_gen_lr_schedule(gen_lr, gen_delay)
     gen_opt = tf.optimizers.Adam(gen_lr_schedule)
-    style_model.compile(disc_opt, gen_opt, steps_per_execution=FLAGS.steps_exec)
+
+    # Compile
+    style_model.compile(disc_opt, gen_opt, steps_per_execution=steps_exec)
 
     return style_model
+
+
+def make_gen_lr_schedule(gen_lr, gen_delay):
+    boundaries, values = [gen_delay], [0, gen_lr]
+    gen_lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
+    return gen_lr_schedule
