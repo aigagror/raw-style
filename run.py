@@ -12,12 +12,12 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_integer('epochs', 100, 'epochs')
 flags.DEFINE_integer('steps_per_epoch', 1000, 'steps_per_epoch')
-flags.DEFINE_enum('backbone', 'Karras', ['Karras', 'BigKarras', 'VGG19', 'ResNet152V2'],
+flags.DEFINE_enum('backbone', 'KarrasDisc', ['KarrasDisc', 'BigKarrasDisc', 'VGG19', 'ResNet152V2'],
                   'backbone of the discriminator model')
 flags.DEFINE_list('layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the model')
-flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras backbone is affected')
+flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the KarrasDisc backbone is affected')
 flags.DEFINE_float('lrelu', 0, 'Leaky ReLU parameter')
 
 flags.DEFINE_integer('steps_exec', None, 'steps per execution')

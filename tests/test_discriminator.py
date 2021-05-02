@@ -4,7 +4,7 @@ from absl import flags
 from absl.testing import absltest
 from tensorflow import python as tf_python
 
-from discriminator import make_karras, make_resnet152v2, make_discriminator
+from discriminator import make_karras_discriminator, make_resnet152v2, make_discriminator
 from layers import NoBatchNorm
 
 FLAGS = flags.FLAGS
@@ -12,14 +12,14 @@ FLAGS = flags.FLAGS
 
 class TestDiscriminator(absltest.TestCase):
     def test_make_model_fns(self):
-        for make_model_fn in [make_karras, make_resnet152v2]:
+        for make_model_fn in [make_karras_discriminator, make_resnet152v2]:
             input = tf.keras.Input([32, 32, 3])
             model = make_model_fn(input)
             self.assertIsInstance(model, tf.keras.Model)
 
     def test_spectral_norm(self):
         input_shape = [32, 32, 3]
-        backbone = 'Karras'
+        backbone = 'KarrasDisc'
         layers = ['conv0']
         for spectral_norm in [True, False]:
             discriminator = make_discriminator(input_shape, backbone, layers, spectral_norm)
@@ -32,7 +32,7 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_dropout(self):
         input_shape = [32, 32, 3]
-        backbone = 'Karras'
+        backbone = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for dropout in [0, 0.5, 1]:
             discriminator = make_discriminator(input_shape, backbone, layers, dropout=dropout)
@@ -46,7 +46,7 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_lrelu(self):
         input_shape = [32, 32, 3]
-        backbone = 'Karras'
+        backbone = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for lrelu in [0, 0.5, 1]:
             discriminator = make_discriminator(input_shape, backbone, layers, lrelu=lrelu)

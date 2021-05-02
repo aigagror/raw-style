@@ -20,7 +20,7 @@ def make_resnet152v2(input_tensor):
     return tf.keras.Model(layer_utils.get_source_inputs(input_tensor), x)
 
 
-def make_karras(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
+def make_karras_discriminator(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
     x = tf.keras.layers.Conv2D(min(2 ** start_hdim, 512), 1, name='conv0')(input_tensor)
     x = MeasureFeats(name='conv0_out')(x)
     x = tf.keras.layers.Dropout(dropout)(x)
@@ -65,8 +65,8 @@ def make_discriminator(input_shape, backbone, layers, apply_spectral_norm=True, 
     x = StandardizeRGB()(input)
 
     backbone_fn_dict = {
-        'Karras': partial(make_karras, dropout=dropout, lrelu=lrelu),
-        'BigKarras': partial(make_karras, start_hdim=6, dropout=dropout, lrelu=lrelu),
+        'KarrasDisc': partial(make_karras_discriminator, dropout=dropout, lrelu=lrelu),
+        'BigKarrasDisc': partial(make_karras_discriminator, start_hdim=6, dropout=dropout, lrelu=lrelu),
         'ResNet152V2': make_resnet152v2,
         'VGG19': partial(tf.keras.applications.VGG19, weights=None)
     }
