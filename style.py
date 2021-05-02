@@ -44,8 +44,9 @@ class StyleModel(tf.keras.Model):
                 g_loss = self._gen_bce_loss(gen_logits)
 
         # Optimize generated image
-        grad = tape.gradient(g_loss, [self.gen_image])
-        self.optimizer.apply_gradients(zip(grad, [self.gen_image]))
+        g_grad = tape.gradient(g_loss, [self.gen_image])
+        self.optimizer.apply_gradients(zip(g_grad, [self.gen_image]))
+        avg_pixel_change = tf.reduce_mean(tf.abs(g_grad))
 
         # Clip to RGB range
         self.gen_image.assign(tf.clip_by_value(self.gen_image, 0, 255))
@@ -54,7 +55,7 @@ class StyleModel(tf.keras.Model):
         d_grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.disc_opt.apply_gradients(zip(d_grads, self.discriminator.trainable_weights))
 
-        return {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss}
+        return {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss, 'avg_pixel_change': avg_pixel_change}
 
     def get_gen_image(self):
         return tf.constant(tf.cast(self.gen_image, tf.uint8))
