@@ -24,7 +24,7 @@ flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. onl
 flags.DEFINE_float('lrelu', 0, 'Leaky ReLU parameter')
 
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
-flags.DEFINE_float('weight_decay', 1e-2, 'discriminator weight decay')
+flags.DEFINE_float('disc_wd', 1e-2, 'discriminator weight decay')
 
 flags.DEFINE_integer('gen_delay', 0, 'delay the optimization of the generated image by [gen_delay] epochs')
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
@@ -62,7 +62,7 @@ def main(argv):
     discriminator = make_discriminator(input_shape, FLAGS.disc_model, FLAGS.layers, FLAGS.spectral_norm, FLAGS.dropout,
                                        FLAGS.lrelu)
     discriminator.summary()
-    style_model = make_and_compile_style_model(gen_image, discriminator, FLAGS.disc_lr, FLAGS.weight_decay,
+    style_model = make_and_compile_style_model(gen_image, discriminator, FLAGS.disc_lr, FLAGS.disc_wd,
                                                FLAGS.gen_lr, FLAGS.gen_delay, FLAGS.steps_exec)
 
     # Train the style model
