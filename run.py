@@ -16,7 +16,7 @@ flags.DEFINE_integer('steps_exec', None, 'steps per execution')
 
 flags.DEFINE_enum('disc_model', 'KarrasDisc', ['KarrasDisc', 'BigKarrasDisc', 'VGG19', 'ResNet152V2'],
                   'discriminator model')
-flags.DEFINE_list('layers', [f'block{i}_lrelu1' for i in range(1, 4)],
+flags.DEFINE_list('disc_layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
 
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the model')
@@ -59,8 +59,8 @@ def main(argv):
 
     # Make the style model
     input_shape = tf.shape(gen_image)[1:]
-    discriminator = make_discriminator(input_shape, FLAGS.disc_model, FLAGS.layers, FLAGS.spectral_norm, FLAGS.dropout,
-                                       FLAGS.lrelu)
+    discriminator = make_discriminator(input_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.spectral_norm,
+                                       FLAGS.dropout, FLAGS.lrelu)
     discriminator.summary()
     style_model = make_and_compile_style_model(gen_image, discriminator, FLAGS.disc_lr, FLAGS.disc_wd,
                                                FLAGS.gen_lr, FLAGS.gen_delay, FLAGS.steps_exec)
