@@ -60,25 +60,25 @@ def attach_disc_head(input, nlayers, dropout, lrelu):
     return x
 
 
-def make_discriminator(input_shape, backbone, layers, apply_spectral_norm=True, dropout=0, lrelu=0.2):
+def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True, dropout=0, lrelu=0.2):
     input = tf.keras.Input(input_shape)
     x = StandardizeRGB()(input)
 
-    backbone_fn_dict = {
+    disc_model_fn_dict = {
         'KarrasDisc': partial(make_karras_discriminator, dropout=dropout, lrelu=lrelu),
         'BigKarrasDisc': partial(make_karras_discriminator, start_hdim=6, dropout=dropout, lrelu=lrelu),
         'ResNet152V2': make_resnet152v2,
         'VGG19': partial(tf.keras.applications.VGG19, weights=None)
     }
 
-    backbone_fn = backbone_fn_dict[backbone]
-    backbone = backbone_fn(input_tensor=x)
+    disc_model_fn = disc_model_fn_dict[disc_model]
+    disc_model = disc_model_fn(input_tensor=x)
 
     # Get layer outputs
     nlayers = 0
-    outputs = [attach_disc_head(backbone.get_layer(layer).output, nlayers, dropout, lrelu)
+    outputs = [attach_disc_head(disc_model.get_layer(layer).output, nlayers, dropout, lrelu)
                for layer in layers]
-    discriminator = tf.keras.Model(backbone.input, outputs, name='discriminator')
+    discriminator = tf.keras.Model(disc_model.input, outputs, name='discriminator')
 
     # Apply spectral norm to linear layers
     if apply_spectral_norm:

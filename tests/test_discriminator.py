@@ -19,10 +19,10 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_spectral_norm(self):
         input_shape = [32, 32, 3]
-        backbone = 'KarrasDisc'
+        disc_model = 'KarrasDisc'
         layers = ['conv0']
         for spectral_norm in [True, False]:
-            discriminator = make_discriminator(input_shape, backbone, layers, spectral_norm)
+            discriminator = make_discriminator(input_shape, disc_model, layers, spectral_norm)
             for layer in discriminator.layers:
                 if hasattr(layer, 'kernel'):
                     if spectral_norm:
@@ -32,10 +32,10 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_dropout(self):
         input_shape = [32, 32, 3]
-        backbone = 'KarrasDisc'
+        disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for dropout in [0, 0.5, 1]:
-            discriminator = make_discriminator(input_shape, backbone, layers, dropout=dropout)
+            discriminator = make_discriminator(input_shape, disc_model, layers, dropout=dropout)
             found_dropout = False
             for layer in discriminator.layers:
                 if isinstance(layer, tf.keras.layers.Dropout):
@@ -46,10 +46,10 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_lrelu(self):
         input_shape = [32, 32, 3]
-        backbone = 'KarrasDisc'
+        disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for lrelu in [0, 0.5, 1]:
-            discriminator = make_discriminator(input_shape, backbone, layers, lrelu=lrelu)
+            discriminator = make_discriminator(input_shape, disc_model, layers, lrelu=lrelu)
             found_lrelu = False
             for layer in discriminator.layers:
                 if isinstance(layer, tf.keras.layers.LeakyReLU):
@@ -60,10 +60,10 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_no_batch_norm(self):
         input_shape = [224, 224, 3]
-        backbone = 'ResNet152V2'
+        disc_model = 'ResNet152V2'
         layers = ['conv2_block1_out']
         for spectral_norm in [False, True]:
-            discriminator = make_discriminator(input_shape, backbone, layers, spectral_norm)
+            discriminator = make_discriminator(input_shape, disc_model, layers, spectral_norm)
             discriminator.summary()
 
             num_batch_norms, num_no_batch_norms = 0, 0
