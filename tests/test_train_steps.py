@@ -1,6 +1,7 @@
 import tensorflow as tf
 from absl.testing import absltest
 
+from generator import PixelImageGenerator
 from style import StyleModel
 
 
@@ -9,7 +10,8 @@ class TestTrainSteps(absltest.TestCase):
         discriminator = tf.keras.Sequential([
             tf.keras.layers.Conv2D(1, 1, kernel_initializer='ones', bias_initializer='zeros')
         ])
-        style_model = StyleModel(discriminator, gen_image)
+        generator = PixelImageGenerator(gen_image)
+        style_model = StyleModel(discriminator, generator)
         style_model.compile('sgd', 'sgd')
         return style_model
 

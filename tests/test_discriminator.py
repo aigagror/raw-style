@@ -18,7 +18,7 @@ class TestDiscriminator(absltest.TestCase):
             self.assertIsInstance(model, tf.keras.Model)
 
     def test_spectral_norm(self):
-        input_shape = [32, 32, 3]
+        input_shape = [1, 32, 32, 3]
         disc_model = 'KarrasDisc'
         layers = ['conv0']
         for spectral_norm in [True, False]:
@@ -31,7 +31,7 @@ class TestDiscriminator(absltest.TestCase):
                         self.assertNotIsInstance(layer, tfa.layers.SpectralNormalization)
 
     def test_dropout(self):
-        input_shape = [32, 32, 3]
+        input_shape = [1, 32, 32, 3]
         disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for dropout in [0, 0.5, 1]:
@@ -45,7 +45,7 @@ class TestDiscriminator(absltest.TestCase):
             self.assertTrue(found_dropout)
 
     def test_lrelu(self):
-        input_shape = [32, 32, 3]
+        input_shape = [1, 32, 32, 3]
         disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for lrelu in [0, 0.5, 1]:
@@ -59,7 +59,7 @@ class TestDiscriminator(absltest.TestCase):
             self.assertTrue(found_lrelu)
 
     def test_no_batch_norm(self):
-        input_shape = [224, 224, 3]
+        input_shape = [1, 224, 224, 3]
         disc_model = 'ResNet152V2'
         layers = ['conv2_block1_out']
         for spectral_norm in [False, True]:

@@ -2,12 +2,14 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from absl import logging
 
+from generator import PixelImageGenerator
+
 
 class StyleModel(tf.keras.Model):
-    def __init__(self, discriminator, gen_image, *args, **kwargs):
+    def __init__(self, discriminator, generator, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.discriminator = discriminator
-        self.gen_image = tf.Variable(gen_image, trainable=True, name='gen_image', dtype=self.dtype)
+        self.generator = generator
         self.bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
 
     def compile(self, disc_opt, gen_opt, *args, **kwargs):
@@ -16,13 +18,14 @@ class StyleModel(tf.keras.Model):
         logging.info(f'discriminator optimizer: {disc_opt.__class__.__name__}')
         logging.info(f'generator optimizer: {self.optimizer.__class__.__name__}')
 
-    def call(self, image, training=None, mask=None):
-        return self.discriminator(image, training=training)
+    def call(self, style_image, training=None, mask=None):
+        return self.generator(style_image, training=training)  # Image is just a filler argument to the generator
 
     def train_step(self, style_image):
         with tf.GradientTape(persistent=True) as tape:
-            images = tf.concat([style_image, self.gen_image], axis=0)
-            logits = self(images, training=True)
+            gen_image = self.generator(style_image)
+            images = tf.concat([style_image, gen_image], axis=0)
+            logits = self.discriminator(images, training=True)
 
             # Discriminator
             if isinstance(logits, list):
@@ -36,29 +39,30 @@ class StyleModel(tf.keras.Model):
                 d_acc = self._disc_bce_acc(logits)
 
             # Generation loss
-            gen_logits = self(self.gen_image, training=False)
+            gen_logits = self.discriminator(gen_image, training=False)
             if isinstance(gen_logits, list):
                 g_loss = [self._gen_bce_loss(l) for l in gen_logits]
                 g_loss = tf.reduce_sum(g_loss)
             else:
                 g_loss = self._gen_bce_loss(gen_logits)
 
-        # Optimize generated image
-        g_grad = tape.gradient(g_loss, [self.gen_image])
-        self.optimizer.apply_gradients(zip(g_grad, [self.gen_image]))
-        avg_pixel_change = tf.reduce_mean(tf.abs(g_grad))
+        # Metrics
+        metrics = {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss}
+
+        # Optimize generator
+        g_grad = tape.gradient(g_loss, self.generator.trainable_weights)
+        self.optimizer.apply_gradients(zip(g_grad, self.generator.trainable_weights))
+        if isinstance(self.generator, PixelImageGenerator):
+            metrics['avg_pixel_change'] = tf.reduce_mean(tf.abs(g_grad))
 
         # Clip to RGB range
-        self.gen_image.assign(tf.clip_by_value(self.gen_image, 0, 255))
+        self.generator.clip_rgb()
 
-        # Optimize feature model
+        # Optimize discriminator
         d_grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.disc_opt.apply_gradients(zip(d_grads, self.discriminator.trainable_weights))
 
-        return {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss, 'avg_pixel_change': avg_pixel_change}
-
-    def get_gen_image(self):
-        return tf.constant(tf.cast(self.gen_image, tf.uint8))
+        return metrics
 
     def _gen_bce_loss(self, gen_logits):
         g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(gen_logits), gen_logits))
@@ -81,9 +85,9 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def make_and_compile_style_model(gen_image, discriminator, disc_lr, disc_wd, gen_lr, gen_delay, steps_exec=None):
+def make_and_compile_style_model(discriminator, generator, disc_lr, disc_wd, gen_lr, gen_delay, steps_exec=None):
     # Style model
-    style_model = StyleModel(discriminator, gen_image)
+    style_model = StyleModel(discriminator, generator)
 
     # Discriminator optimizer
     disc_opt = tfa.optimizers.LAMB(disc_lr, weight_decay_rate=disc_wd)

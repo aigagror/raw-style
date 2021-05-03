@@ -29,7 +29,7 @@ def make_karras_discriminator(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
     for i, j in enumerate(range(start_hdim, start_hdim + 8)):
         h1, h2 = min(2 ** j, 512), min(2 ** (j + 1), 512)
         x = tf.keras.layers.Conv2D(h1, 3, padding='same', name=f'block{i + 1}_conv1')(x)
-        x = MeasureFeats(name=f'block{i+1}_conv1_out')(x)
+        x = MeasureFeats(name=f'block{i + 1}_conv1_out')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu1')(x)
 
@@ -61,7 +61,7 @@ def attach_disc_head(input, nlayers, dropout, lrelu):
 
 
 def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True, dropout=0, lrelu=0.2):
-    input = tf.keras.Input(input_shape)
+    input = tf.keras.Input(input_shape[1:])
     x = StandardizeRGB()(input)
 
     disc_model_fn_dict = {

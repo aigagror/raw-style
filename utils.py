@@ -1,6 +1,8 @@
+import os
+import shutil
+
 import tensorflow as tf
 from absl import flags, logging
-import shutil, os
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('style_path', 'images/starry_night.jpg', 'file path to the style image')
@@ -18,7 +20,7 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         os.mkdir('out/tmp')
 
     def get_avg_change(self):
-        new_image = tf.squeeze(self.model.get_gen_image())
+        new_image = tf.squeeze(self.model.generator.get_gen_image())
         self.prev_image = self.curr_image
         self.curr_image = new_image
 
@@ -30,8 +32,8 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         return avg_change
 
     def on_train_begin(self, logs=None):
-        self.prev_image = tf.squeeze(self.model.get_gen_image())
-        self.curr_image = tf.squeeze(self.model.get_gen_image())
+        self.prev_image = tf.squeeze(self.model.generator.get_gen_image())
+        self.curr_image = tf.squeeze(self.model.generator.get_gen_image())
 
     def on_epoch_end(self, epoch, logs=None):
         avg_change = self.get_avg_change()
@@ -42,7 +44,7 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         tf.io.write_file(f'out/tmp/{epoch}.jpg', tf.io.encode_jpeg(self.curr_image))
 
 
-def load_and_resize_image(image_path, image_size):
+def load_resize_batch_image(image_path, image_size):
     image = tf.image.decode_image(tf.io.read_file(image_path))
     image = tf.keras.preprocessing.image.smart_resize(image, [image_size, image_size])
     image = tf.image.convert_image_dtype(image, tf.float32)
@@ -50,16 +52,8 @@ def load_and_resize_image(image_path, image_size):
     return image
 
 
-def load_style_and_gen_images():
-    style_image = load_and_resize_image(FLAGS.style_path, FLAGS.image_size)
+def load_style_image():
+    style_image = load_resize_batch_image(FLAGS.style_path, FLAGS.image_size)
     logging.info(f"loaded style image from '{FLAGS.style_path}'")
 
-    if FLAGS.gen_path is not None:
-        gen_image = load_and_resize_image(FLAGS.gen_path, FLAGS.image_size)
-        logging.info(f"loaded generated image from '{FLAGS.gen_path}'")
-    else:
-        gen_image = tf.random.uniform([1, FLAGS.image_size, FLAGS.image_size, 3], maxval=256, dtype=tf.int32)
-        gen_image = tf.cast(gen_image, tf.float32)
-        logging.info(f"generated image initialized as random uniform")
-
-    return style_image, gen_image
+    return style_image

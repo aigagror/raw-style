@@ -18,6 +18,7 @@ class NoBatchNorm(tf.keras.layers.Activation):
     def __init__(self, *args, **kwargs):
         super().__init__('linear')
 
+
 class MeasureFeats(tf.keras.layers.Layer):
     def call(self, inputs, *args, **kwargs):
         norms = tf.norm(inputs, axis=-1)

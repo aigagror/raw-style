@@ -24,7 +24,7 @@ class TestLayer(absltest.TestCase):
         norm = model.metrics[0].result()
         mean = model.metrics[1].result()
         std = model.metrics[2].result()
-        tf.debugging.assert_near(norm, (3 ** 0.5) * tf.ones_like(norm), rtol=0.5) # There is precision loss for this
+        tf.debugging.assert_near(norm, (3 ** 0.5) * tf.ones_like(norm), rtol=0.5)  # There is precision loss for this
         tf.debugging.assert_near(mean, tf.zeros_like(mean), atol=0.01)
         tf.debugging.assert_near(std, tf.ones_like(std), atol=0.05)
 
