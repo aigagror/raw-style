@@ -67,6 +67,7 @@ def main(argv):
     discriminator.summary()
 
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
+    generator.summary()
     style_model = make_and_compile_style_model(discriminator, generator, FLAGS.disc_lr, FLAGS.disc_wd,
                                                FLAGS.gen_lr, FLAGS.gen_wd, FLAGS.gen_delay, FLAGS.steps_exec)
 
