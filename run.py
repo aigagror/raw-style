@@ -59,15 +59,16 @@ def main(argv):
 
     # Load the images
     style_image = load_style_image()
+    image_shape = tf.shape(style_image)
 
     # Make the style model
-    image_shape = tf.shape(style_image)
     discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.spectral_norm,
                                        FLAGS.dropout, FLAGS.lrelu)
     discriminator.summary()
 
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
     generator.summary()
+
     style_model = make_and_compile_style_model(discriminator, generator, FLAGS.disc_lr, FLAGS.disc_wd,
                                                FLAGS.gen_lr, FLAGS.gen_wd, FLAGS.gen_delay, FLAGS.steps_exec)
 
