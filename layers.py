@@ -15,8 +15,13 @@ class SNConv2D(tfa.layers.SpectralNormalization):
 
 
 class NoBatchNorm(tf.keras.layers.Activation):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__('linear')
+
+
+class StandardizeFeats(tf.keras.layers.BatchNormalization):
+    def __init__(self, **kwargs):
+        super().__init__(scale=False, center=False, momentum=0)
 
 
 class MeasureFeats(tf.keras.layers.Layer):

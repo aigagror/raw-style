@@ -1,13 +1,10 @@
 from functools import partial
 
 import tensorflow as tf
-from absl import flags
 from tensorflow.python.keras.applications import resnet
 from tensorflow.python.keras.utils import layer_utils
 
-from layers import SNConv2D, StandardizeRGB, NoBatchNorm, MeasureFeats
-
-FLAGS = flags.FLAGS
+from layers import SNConv2D, StandardizeRGB, NoBatchNorm, MeasureFeats, StandardizeFeats
 
 
 def make_resnet152v2(input_tensor):
@@ -22,20 +19,17 @@ def make_resnet152v2(input_tensor):
 
 def make_karras_discriminator(input_tensor, hdims=[2 ** i for i in range(4, 12)], dropout=0, lrelu=0.2):
     x = tf.keras.layers.Conv2D(min(hdims[0], 512), 1, name='conv0')(input_tensor)
-    x = tf.keras.layers.BatchNormalization()(x)
     x = MeasureFeats(name='conv0_out')(x)
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.LeakyReLU(lrelu, name=f'lrelu0')(x)
 
     for i in range(len(hdims) - 1):
         x = tf.keras.layers.Conv2D(min(hdims[i], 512), 3, padding='same', name=f'block{i + 1}_conv1')(x)
-        x = tf.keras.layers.BatchNormalization()(x)
         x = MeasureFeats(name=f'block{i + 1}_conv1_out')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu1')(x)
 
         x = tf.keras.layers.Conv2D(min(hdims[i + 1], 512), 3, padding='same', name=f'block{i + 1}_conv2')(x)
-        x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu2')(x)
 
@@ -47,7 +41,7 @@ def make_karras_discriminator(input_tensor, hdims=[2 ** i for i in range(4, 12)]
     return tf.keras.Model(layer_utils.get_source_inputs(input_tensor), x)
 
 
-def attach_disc_head(input, nlayers, dropout, lrelu):
+def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out):
     x = input
 
     # Hidden layers
@@ -59,10 +53,14 @@ def attach_disc_head(input, nlayers, dropout, lrelu):
     # Last layer
     x = tf.keras.layers.Conv2D(1, 1)(x)
 
+    if standardize_out:
+        x = StandardizeFeats()(x)
+
     return x
 
 
-def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True, dropout=0, lrelu=0.2):
+def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True, dropout=0, lrelu=0.2,
+                       standardize_out=False):
     input = tf.keras.Input(input_shape[1:])
     x = StandardizeRGB()(input)
 
@@ -80,7 +78,7 @@ def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True
 
     # Get layer outputs
     nlayers = 0
-    outputs = [attach_disc_head(disc_model.get_layer(layer).output, nlayers, dropout, lrelu)
+    outputs = [attach_disc_head(disc_model.get_layer(layer).output, nlayers, dropout, lrelu, standardize_out)
                for layer in layers]
     discriminator = tf.keras.Model(disc_model.input, outputs, name='discriminator')
 
@@ -90,6 +88,7 @@ def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True
                                                      custom_objects={'Conv2D': SNConv2D,
                                                                      'StandardizeRGB': StandardizeRGB,
                                                                      'BatchNormalization': NoBatchNorm,
-                                                                     'MeasureFeats': MeasureFeats})
+                                                                     'MeasureFeats': MeasureFeats,
+                                                                     'StandardizeFeats': StandardizeFeats})
 
     return discriminator

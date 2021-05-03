@@ -19,6 +19,7 @@ flags.DEFINE_enum('disc_model', 'KarrasDisc', ['KarrasDisc', '256KarrasDisc', 'V
                   'discriminator model')
 flags.DEFINE_list('disc_layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
+flags.DEFINE_bool('standardize_out', False, 'standardize outputs of the discriminator')
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
 flags.DEFINE_float('disc_wd', 1e-2, 'discriminator weight decay')
 
@@ -63,7 +64,7 @@ def main(argv):
 
     # Make the style model
     discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.spectral_norm,
-                                       FLAGS.dropout, FLAGS.lrelu)
+                                       FLAGS.dropout, FLAGS.lrelu, FLAGS.standardize_out)
     discriminator.summary()
 
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
