@@ -1,12 +1,9 @@
 import tensorflow as tf
 import tensorflow_addons as tfa
-from absl import flags
 from absl.testing import absltest
 
 from discriminator import make_karras_discriminator, make_resnet152v2, make_discriminator
 from layers import NoBatchNorm
-
-FLAGS = flags.FLAGS
 
 
 class TestDiscriminator(absltest.TestCase):
