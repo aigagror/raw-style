@@ -55,7 +55,7 @@ def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out, input_name
 
     if standardize_out:
         x = StandardizeFeats()(x)
-    x = MeasureFeats(f'{input_name}_out')(x)
+    x = MeasureFeats(name=f'{input_name}_out')(x)
 
     return x
 
