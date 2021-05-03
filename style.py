@@ -23,7 +23,7 @@ class StyleModel(tf.keras.Model):
 
     def train_step(self, style_image):
         with tf.GradientTape(persistent=True) as tape:
-            gen_image = self.generator(style_image)
+            gen_image = self.generator(style_image, training=True)
             images = tf.concat([style_image, gen_image], axis=0)
             logits = self.discriminator(images, training=True)
 
@@ -39,7 +39,7 @@ class StyleModel(tf.keras.Model):
                 d_acc = self._disc_bce_acc(logits)
 
             # Generation loss
-            gen_logits = self.discriminator(gen_image, training=False)
+            gen_logits = self.discriminator(gen_image, training=False)  # We call disc again for dropout inference
             if isinstance(gen_logits, list):
                 g_loss = [self._gen_bce_loss(l) for l in gen_logits]
                 g_loss = tf.reduce_sum(g_loss)
