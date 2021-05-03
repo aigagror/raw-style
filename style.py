@@ -39,12 +39,11 @@ class StyleModel(tf.keras.Model):
                 d_acc = self._disc_bce_acc(logits)
 
             # Generation loss
-            gen_logits = self.discriminator(gen_image, training=False)  # We call disc again for dropout inference
-            if isinstance(gen_logits, list):
-                g_loss = [self._gen_bce_loss(l) for l in gen_logits]
+            if isinstance(logits, list):
+                g_loss = [self._gen_bce_loss(l) for l in logits]
                 g_loss = tf.reduce_sum(g_loss)
             else:
-                g_loss = self._gen_bce_loss(gen_logits)
+                g_loss = self._gen_bce_loss(logits)
 
         # Metrics
         metrics = {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss}
@@ -67,7 +66,8 @@ class StyleModel(tf.keras.Model):
 
         return metrics
 
-    def _gen_bce_loss(self, gen_logits):
+    def _gen_bce_loss(self, logits):
+        gen_logits = logits[1]
         g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(gen_logits), gen_logits))
         return g_loss
 
