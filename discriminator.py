@@ -20,20 +20,19 @@ def make_resnet152v2(input_tensor):
     return tf.keras.Model(layer_utils.get_source_inputs(input_tensor), x)
 
 
-def make_karras_discriminator(input_tensor, start_hdim=4, dropout=0, lrelu=0.2):
-    x = tf.keras.layers.Conv2D(min(2 ** start_hdim, 512), 1, name='conv0')(input_tensor)
+def make_karras_discriminator(input_tensor, hdims=[2 ** i for i in range(4, 12)], dropout=0, lrelu=0.2):
+    x = tf.keras.layers.Conv2D(min(hdims[0], 512), 1, name='conv0')(input_tensor)
     x = MeasureFeats(name='conv0_out')(x)
     x = tf.keras.layers.Dropout(dropout)(x)
     x = tf.keras.layers.LeakyReLU(lrelu, name=f'lrelu0')(x)
 
-    for i, j in enumerate(range(start_hdim, start_hdim + 8)):
-        h1, h2 = min(2 ** j, 512), min(2 ** (j + 1), 512)
-        x = tf.keras.layers.Conv2D(h1, 3, padding='same', name=f'block{i + 1}_conv1')(x)
+    for i in range(len(hdims) - 1):
+        x = tf.keras.layers.Conv2D(min(hdims[i], 512), 3, padding='same', name=f'block{i + 1}_conv1')(x)
         x = MeasureFeats(name=f'block{i + 1}_conv1_out')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu1')(x)
 
-        x = tf.keras.layers.Conv2D(h2, 3, padding='same', name=f'block{i + 1}_conv2')(x)
+        x = tf.keras.layers.Conv2D(min(hdims[i + 1], 512), 3, padding='same', name=f'block{i + 1}_conv2')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'block{i + 1}_lrelu2')(x)
 
@@ -67,7 +66,8 @@ def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True
     disc_model_fn_dict = {
         'MobileNetV3Small': partial(tf.keras.applications.MobileNetV3Small, weights=None),
         'KarrasDisc': partial(make_karras_discriminator, dropout=dropout, lrelu=lrelu),
-        'BigKarrasDisc': partial(make_karras_discriminator, start_hdim=6, dropout=dropout, lrelu=lrelu),
+        '256KarrasDisc': partial(make_karras_discriminator, hdims=[256 for i in range(8)],
+                                 dropout=dropout, lrelu=lrelu),
         'ResNet152V2': make_resnet152v2,
         'VGG19': partial(tf.keras.applications.VGG19, weights=None)
     }
