@@ -65,6 +65,7 @@ def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True
     x = StandardizeRGB()(input)
 
     disc_model_fn_dict = {
+        'MobileNetV3Small': partial(tf.keras.applications.MobileNetV3Small, weights=None),
         'KarrasDisc': partial(make_karras_discriminator, dropout=dropout, lrelu=lrelu),
         'BigKarrasDisc': partial(make_karras_discriminator, start_hdim=6, dropout=dropout, lrelu=lrelu),
         'ResNet152V2': make_resnet152v2,

@@ -60,11 +60,11 @@ class TestDiscriminator(absltest.TestCase):
 
     def test_no_batch_norm(self):
         input_shape = [1, 224, 224, 3]
-        disc_model = 'ResNet152V2'
-        layers = ['conv2_block1_out']
+        disc_model = 'MobileNetV3Small'
+        layers = ['re_lu']
         for spectral_norm in [False, True]:
+            tf.keras.backend.clear_session()
             discriminator = make_discriminator(input_shape, disc_model, layers, spectral_norm)
-            discriminator.summary()
 
             num_batch_norms, num_no_batch_norms = 0, 0
             for layer in discriminator.layers:
