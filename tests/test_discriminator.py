@@ -30,7 +30,7 @@ class TestDiscriminator(absltest.TestCase):
         input_shape = [1, 32, 32, 3]
         disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
-        for dropout in [0, 0.5, 1]:
+        for dropout in [0.5, 1]:
             discriminator = make_discriminator(input_shape, disc_model, layers, dropout=dropout)
             found_dropout = False
             for layer in discriminator.layers:
@@ -39,6 +39,18 @@ class TestDiscriminator(absltest.TestCase):
                     self.assertEqual(layer.rate, dropout)
 
             self.assertTrue(found_dropout)
+
+    def test_no_dropout(self):
+        input_shape = [1, 32, 32, 3]
+        disc_model = 'KarrasDisc'
+        layers = ['block1_lrelu1']
+        discriminator = make_discriminator(input_shape, disc_model, layers, dropout=0)
+        found_dropout = False
+        for layer in discriminator.layers:
+            if isinstance(layer, tf.keras.layers.Dropout):
+                found_dropout = True
+
+        self.assertFalse(found_dropout)
 
     def test_lrelu(self):
         input_shape = [1, 32, 32, 3]
