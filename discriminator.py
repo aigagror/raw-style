@@ -41,7 +41,7 @@ def make_karras_discriminator(input_tensor, hdims=[2 ** i for i in range(4, 12)]
     return tf.keras.Model(layer_utils.get_source_inputs(input_tensor), x)
 
 
-def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out):
+def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out, input_name):
     x = input
 
     # Hidden layers
@@ -55,6 +55,7 @@ def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out):
 
     if standardize_out:
         x = StandardizeFeats()(x)
+    x = MeasureFeats(f'{input_name}_out')(x)
 
     return x
 
@@ -78,7 +79,8 @@ def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True
 
     # Get layer outputs
     nlayers = 0
-    outputs = [attach_disc_head(disc_model.get_layer(layer).output, nlayers, dropout, lrelu, standardize_out)
+    outputs = [attach_disc_head(disc_model.get_layer(layer).output, nlayers, dropout, lrelu, standardize_out,
+                                input_name=layer)
                for layer in layers]
     discriminator = tf.keras.Model(disc_model.input, outputs, name='discriminator')
 
