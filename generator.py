@@ -84,7 +84,7 @@ def make_karras_generator(output_shape, start_hdim=8, dropout=0, lrelu=0.2):
 def make_generator(output_shape, gen_path=None, gen_model=None, dropout=0, lrelu=0.2):
     if gen_model is None:
         if gen_path is not None:
-            gen_image = load_resize_batch_image(gen_path, output_shape[1])
+            gen_image = load_resize_batch_image(gen_path, int(output_shape[1]))
             logging.info(f"loaded generated image from '{gen_path}'")
         else:
             gen_image = tf.random.uniform(output_shape, maxval=256, dtype=tf.float32)
