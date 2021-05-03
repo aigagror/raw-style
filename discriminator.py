@@ -44,6 +44,10 @@ def make_karras_discriminator(input_tensor, hdims=[2 ** i for i in range(4, 12)]
 def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out, input_name):
     x = input
 
+    # Standardize input?
+    if standardize_out:
+        x = StandardizeFeats()(x)
+
     # Hidden layers
     for _ in range(nlayers):
         x = tf.keras.layers.Conv2D(256, 1)(x)
@@ -53,8 +57,7 @@ def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out, input_name
     # Last layer
     x = tf.keras.layers.Conv2D(1, 1)(x)
 
-    if standardize_out:
-        x = StandardizeFeats()(x)
+    # Measure output
     x = MeasureFeats(name=f'{input_name}_out')(x)
 
     return x
