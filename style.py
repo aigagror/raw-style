@@ -62,6 +62,9 @@ class StyleModel(tf.keras.Model):
         d_grads = tape.gradient(d_loss, self.discriminator.trainable_weights)
         self.disc_opt.apply_gradients(zip(d_grads, self.discriminator.trainable_weights))
 
+        for m in self.metrics:
+            metrics[m.name] = m.result()
+
         return metrics
 
     def _gen_bce_loss(self, gen_logits):
