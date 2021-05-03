@@ -78,7 +78,7 @@ def make_karras_generator(output_shape, start_hdim=15, max_dim=512, dropout=0, l
         else:
             x = tf.keras.layers.UpSampling2D(interpolation='bilinear')(x)
 
-    return seed, tf.keras.Model(input, x)
+    return seed, tf.keras.Model(input, x, name='generator')
 
 
 def make_generator(output_shape, gen_path=None, gen_model=None, dropout=0, lrelu=0.2):
