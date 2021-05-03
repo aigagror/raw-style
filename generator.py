@@ -54,14 +54,14 @@ class DeepImageGenerator(ImageGenerator):
         return self.gen_model.summary()
 
 
-def make_karras_generator(output_shape, start_hdim=8, dropout=0, lrelu=0.2):
-    input_shape = [1, 1, 1, start_hdim]
+def make_karras_generator(output_shape, start_hdim=15, max_dim=512, dropout=0, lrelu=0.2):
+    input_shape = [1, 1, 1, min(2 ** start_hdim, max_dim)]
     seed = tf.Variable(tf.random.normal(input_shape), trainable=True, name='seed')
 
     input = tf.keras.Input(input_shape[1:])
     x = input
     for i, j in enumerate(range(start_hdim, 1, -1)):
-        h1, h2 = 2 ** j, 2 ** (j + 1)
+        h1, h2 = min(2 ** j, max_dim), min(2 ** (j - 1), max_dim)
         first_kernel_size = 4 if i == 0 else 3
         x = tf.keras.layers.Conv2D(h1, first_kernel_size, padding='same', name=f'gen_block{i + 1}_conv1')(x)
         x = tf.keras.layers.Dropout(dropout)(x)
@@ -95,7 +95,8 @@ def make_generator(output_shape, gen_path=None, gen_model=None, dropout=0, lrelu
         assert gen_path is None
         gen_model_fn_dict = {
             'KarrasGen': partial(make_karras_generator, output_shape, dropout=dropout, lrelu=lrelu),
-            'BigKarrasGen': partial(make_karras_generator, output_shape, start_hdim=9, dropout=dropout, lrelu=lrelu),
+            'SmallKarrasGen': partial(make_karras_generator, output_shape, max_dim=128, dropout=dropout, lrelu=lrelu),
+            'TinyKarrasGen': partial(make_karras_generator, output_shape, max_dim=64, dropout=dropout, lrelu=lrelu),
         }
 
         seed, gen_model = gen_model_fn_dict[gen_model]()

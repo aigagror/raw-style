@@ -22,7 +22,7 @@ flags.DEFINE_list('disc_layers', [f'block{i}_lrelu1' for i in range(1, 4)],
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
 flags.DEFINE_float('disc_wd', 1e-2, 'discriminator weight decay')
 
-flags.DEFINE_enum('gen_model', None, ['KarrasGen', 'BigKarrasGen'], 'discriminator model')
+flags.DEFINE_enum('gen_model', None, ['KarrasGen', 'SmallKarrasGen', 'TinyKarrasGen'], 'generator model')
 flags.DEFINE_integer('gen_delay', 0, 'delay the optimization of the generated image by [gen_delay] epochs')
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
 flags.DEFINE_float('gen_wd', 0, 'generator weight decay. should only be used if using DeepImageGenerator')
