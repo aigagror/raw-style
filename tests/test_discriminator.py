@@ -2,19 +2,14 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from absl.testing import absltest
 
-from discriminator import make_karras_discriminator, make_resnet152v2, make_discriminator
+from discriminator import make_discriminator
 from layers import NoBatchNorm, StandardizeFeats
 
 
 class TestDiscriminator(absltest.TestCase):
-    def test_make_model_fns(self):
-        for make_model_fn in [make_karras_discriminator, make_resnet152v2]:
-            input = tf.keras.Input([32, 32, 3])
-            model = make_model_fn(input)
-            self.assertIsInstance(model, tf.keras.Model)
 
     def test_spectral_norm(self):
-        input_shape = [1, 32, 32, 3]
+        input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
         layers = ['conv0']
         for spectral_norm in [True, False]:
@@ -27,7 +22,7 @@ class TestDiscriminator(absltest.TestCase):
                         self.assertNotIsInstance(layer, tfa.layers.SpectralNormalization)
 
     def test_dropout(self):
-        input_shape = [1, 32, 32, 3]
+        input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for dropout in [0.5, 1]:
@@ -41,7 +36,7 @@ class TestDiscriminator(absltest.TestCase):
             self.assertTrue(found_dropout)
 
     def test_no_dropout(self):
-        input_shape = [1, 32, 32, 3]
+        input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         discriminator = make_discriminator(input_shape, disc_model, layers, dropout=0)
@@ -53,7 +48,7 @@ class TestDiscriminator(absltest.TestCase):
         self.assertFalse(found_dropout)
 
     def test_lrelu(self):
-        input_shape = [1, 32, 32, 3]
+        input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
         layers = ['block1_lrelu1']
         for lrelu in [0, 0.5, 1]:
@@ -88,7 +83,6 @@ class TestDiscriminator(absltest.TestCase):
                 self.assertGreater(num_batch_norms, 0)
                 self.assertEqual(num_no_batch_norms, 0)
 
-
     def test_standardize_out(self):
         input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
@@ -101,6 +95,7 @@ class TestDiscriminator(absltest.TestCase):
                     found_standard_feats = True
 
             self.assertEqual(found_standard_feats, standardize_out)
+
 
 if __name__ == '__main__':
     absltest.main()
