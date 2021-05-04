@@ -62,7 +62,7 @@ class TestDiscriminator(absltest.TestCase):
             self.assertTrue(found_lrelu)
 
     def test_no_batch_norm(self):
-        input_shape = [1, 224, 224, 3]
+        input_shape = [1, 32, 32, 3]
         disc_model = 'MobileNetV3Small'
         layers = ['re_lu']
         for spectral_norm in [False, True]:
