@@ -88,7 +88,7 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def make_and_compile_style_model(discriminator, generator, disc_lr, disc_wd, gen_lr, gen_wd, gen_start,
+def make_and_compile_style_model(discriminator, generator, disc_lr, disc_wd, gen_lr, gen_wd, gen_start, gen_decay,
                                  steps_exec=None):
     # Style model
     style_model = StyleModel(discriminator, generator)
@@ -97,7 +97,7 @@ def make_and_compile_style_model(discriminator, generator, disc_lr, disc_wd, gen
     disc_opt = tfa.optimizers.LAMB(disc_lr, weight_decay_rate=disc_wd)
 
     # Generator optimizer
-    gen_lr_schedule = make_gen_lr_schedule(gen_lr, gen_start)
+    gen_lr_schedule = make_gen_lr_schedule(gen_lr, gen_start, gen_decay)
     if isinstance(generator, PixelImageGenerator):
         gen_opt = tf.optimizers.Adam(gen_lr_schedule)
     else:
@@ -109,7 +109,11 @@ def make_and_compile_style_model(discriminator, generator, disc_lr, disc_wd, gen
     return style_model
 
 
-def make_gen_lr_schedule(gen_lr, gen_start):
+def make_gen_lr_schedule(gen_lr, gen_start, gen_decay=None):
     boundaries, values = [gen_start], [0.0, gen_lr]
+    if gen_decay is not None:
+        for i, decay_step in enumerate(gen_decay, 1):
+            boundaries.append(decay_step)
+            values.append(gen_lr * 10 ** -i)
     gen_lr_schedule = tf.keras.optimizers.schedules.PiecewiseConstantDecay(boundaries, values)
     return gen_lr_schedule

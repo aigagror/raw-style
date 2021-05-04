@@ -24,9 +24,10 @@ flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
 flags.DEFINE_float('disc_wd', 1e-2, 'discriminator weight decay')
 
 flags.DEFINE_enum('gen_model', None, ['KarrasGen', 'SmallKarrasGen', 'TinyKarrasGen'], 'generator model')
-flags.DEFINE_integer('gen_start', 0, 'delay the optimization of the generated image by [gen_start] epochs')
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
 flags.DEFINE_float('gen_wd', 0, 'generator weight decay. should only be used if using DeepImageGenerator')
+flags.DEFINE_integer('gen_start', 0, 'delay the optimization of the generated image by [gen_start] epochs')
+flags.DEFINE_multi_integer('gen_decay', 0, 'decay the learning rate of the generation optimizer by 0.1 at the given step')
 
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the discriminator model')
 flags.DEFINE_float('dropout', 0,
@@ -71,7 +72,8 @@ def main(argv):
     generator.summary()
 
     style_model = make_and_compile_style_model(discriminator, generator, FLAGS.disc_lr, FLAGS.disc_wd,
-                                               FLAGS.gen_lr, FLAGS.gen_wd, FLAGS.gen_start, FLAGS.steps_exec)
+                                               FLAGS.gen_lr, FLAGS.gen_wd, FLAGS.gen_start, FLAGS.gen_decay,
+                                               FLAGS.steps_exec)
 
     # Train the style model
     train(style_model, style_image)
