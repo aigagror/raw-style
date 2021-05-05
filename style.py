@@ -3,13 +3,15 @@ import tensorflow_addons as tfa
 from absl import logging
 
 from generator import PixelImageGenerator
+from utils import add_noise
 
 
 class StyleModel(tf.keras.Model):
-    def __init__(self, discriminator, generator, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, discriminator, generator, noise=0, **kwargs):
+        super().__init__(**kwargs)
         self.discriminator = discriminator
         self.generator = generator
+        self.noise = noise
         self.bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
 
     def compile(self, disc_opt, gen_opt, *args, **kwargs):
@@ -25,6 +27,7 @@ class StyleModel(tf.keras.Model):
         with tf.GradientTape(persistent=True) as tape:
             gen_image = self.generator(style_image, training=True)
             images = tf.concat([style_image, gen_image], axis=0)
+            images = add_noise(images, self.noise)
             logits = self.discriminator(images, training=True)
 
             # Discriminator
@@ -88,10 +91,12 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def make_and_compile_style_model(discriminator, generator, disc_lr, disc_wd, gen_lr, gen_wd, gen_start, gen_decay,
+def make_and_compile_style_model(discriminator, generator, noise,
+                                 disc_lr, disc_wd, gen_lr,
+                                 gen_wd, gen_start, gen_decay,
                                  steps_exec=None):
     # Style model
-    style_model = StyleModel(discriminator, generator)
+    style_model = StyleModel(discriminator, generator, noise)
 
     # Discriminator optimizer
     disc_opt = tfa.optimizers.LAMB(disc_lr, weight_decay_rate=disc_wd)

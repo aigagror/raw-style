@@ -57,3 +57,7 @@ def load_style_image():
     logging.info(f"loaded style image from '{FLAGS.style_path}'")
 
     return style_image
+
+
+def add_noise(image, magnitude):
+    return tf.clip_by_value(image + magnitude * tf.random.uniform(tf.shape(image), minval=-1, maxval=1), 0, 255)
