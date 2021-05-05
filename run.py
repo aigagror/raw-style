@@ -34,7 +34,7 @@ flags.DEFINE_multi_integer('gen_decay', 0,
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the discriminator model')
 flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras models are affected')
 flags.DEFINE_float('noise', 0, 'the amount of uniform noise to add to the images during train to prevent overfitting')
-flags.DEFINE_float('lrelu', 0, 'Leaky ReLU parameter')
+flags.DEFINE_float('lrelu', 0.2, 'Leaky ReLU parameter')
 
 
 def train(sc_model, style_image):

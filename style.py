@@ -56,6 +56,7 @@ class StyleModel(tf.keras.Model):
         self.optimizer.apply_gradients(zip(g_grad, self.generator.trainable_weights))
         if isinstance(self.generator, PixelImageGenerator):
             metrics['avg_pixel_grad'] = tf.reduce_mean(tf.abs(g_grad))
+            metrics['max_pixel_grad'] = tf.reduce_max(tf.abs(g_grad))
 
         # Clip to RGB range
         self.generator.clip_rgb()
