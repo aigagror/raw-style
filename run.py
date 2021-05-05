@@ -70,6 +70,7 @@ def main(argv):
     # Make the style model
     discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.spectral_norm,
                                        FLAGS.dropout, FLAGS.lrelu, FLAGS.standardize_out)
+    logging.info(f'disc layers: {FLAGS.disc_layers}')
     discriminator.summary()
 
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
