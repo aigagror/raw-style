@@ -92,14 +92,15 @@ class StyleModel(tf.keras.Model):
 
 
 def make_and_compile_style_model(discriminator, generator, noise,
-                                 disc_lr, disc_wd, gen_lr,
+                                 disc_opt, disc_lr, disc_wd, gen_lr,
                                  gen_wd, gen_start, gen_decay,
                                  steps_exec=None):
     # Style model
     style_model = StyleModel(discriminator, generator, noise)
 
     # Discriminator optimizer
-    disc_opt = tfa.optimizers.LAMB(disc_lr, weight_decay_rate=disc_wd)
+    disc_opt_map = {'sgd': tf.optimizers.SGD(disc_lr), 'lamb': tfa.optimizers.LAMB(disc_lr, weight_decay_rate=disc_wd)}
+    disc_opt = disc_opt_map[disc_opt]
 
     # Generator optimizer
     gen_lr_schedule = make_gen_lr_schedule(gen_lr, gen_start, gen_decay)
