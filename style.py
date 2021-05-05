@@ -7,11 +7,12 @@ from utils import add_noise
 
 
 class StyleModel(tf.keras.Model):
-    def __init__(self, discriminator, generator, noise=0, **kwargs):
+    def __init__(self, discriminator, generator, noise=0, debug_g_grad=False, **kwargs):
         super().__init__(**kwargs)
         self.discriminator = discriminator
         self.generator = generator
         self.noise = noise
+        self.debug_g_grad = debug_g_grad
         self.bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
 
     def compile(self, disc_opt, gen_opt, *args, **kwargs):
@@ -58,6 +59,11 @@ class StyleModel(tf.keras.Model):
             metrics['avg_pixel_grad'] = tf.reduce_mean(tf.abs(g_grad))
             metrics['max_pixel_grad'] = tf.reduce_max(tf.abs(g_grad))
 
+        if self.debug_g_grad:
+            d_g_grad = tape.gradient(g_loss, self.discriminator.trainable_weights)
+            for g in d_g_grad:
+                metrics[f'avg_{g.name}_grad'] = tf.reduce_mean(tf.abs(g))
+
         # Clip to RGB range
         self.generator.clip_rgb()
 
@@ -92,12 +98,12 @@ class StyleModel(tf.keras.Model):
         return d_loss
 
 
-def make_and_compile_style_model(discriminator, generator, noise,
+def make_and_compile_style_model(discriminator, generator, noise, debug_g_grad,
                                  disc_opt, disc_lr, disc_wd, gen_lr,
                                  gen_wd, gen_start, gen_decay,
                                  steps_exec=None):
     # Style model
-    style_model = StyleModel(discriminator, generator, noise)
+    style_model = StyleModel(discriminator, generator, noise, debug_g_grad)
 
     # Discriminator optimizer
     disc_opt_map = {'sgd': tf.optimizers.SGD(disc_lr), 'lamb': tfa.optimizers.LAMB(disc_lr, weight_decay_rate=disc_wd)}

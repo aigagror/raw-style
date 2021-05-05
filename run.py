@@ -30,6 +30,8 @@ flags.DEFINE_float('gen_wd', 0, 'generator weight decay. should only be used if 
 flags.DEFINE_integer('gen_start', 0, 'delay the optimization of the generated image by [gen_start] epochs')
 flags.DEFINE_multi_integer('gen_decay', 0,
                            'decay the learning rate of the generation optimizer by 0.1 at the given step')
+flags.DEFINE_bool('debug_g_grad', False,
+                  'debug the gradient of the generated image by examining the average gradients of the generator loss w.r.t to the discriminator layers')
 
 flags.DEFINE_bool('spectral_norm', True, 'apply spectral normalization to all linear layers in the discriminator model')
 flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras models are affected')
@@ -73,7 +75,7 @@ def main(argv):
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
     generator.summary()
 
-    style_model = make_and_compile_style_model(discriminator, generator, FLAGS.noise,
+    style_model = make_and_compile_style_model(discriminator, generator, FLAGS.noise, FLAGS.debug_g_grad,
                                                FLAGS.disc_opt, FLAGS.disc_lr, FLAGS.disc_wd,
                                                FLAGS.gen_lr, FLAGS.gen_wd, FLAGS.gen_start, FLAGS.gen_decay,
                                                FLAGS.steps_exec)
