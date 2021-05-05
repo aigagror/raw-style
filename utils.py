@@ -19,7 +19,7 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         shutil.rmtree('out/tmp', ignore_errors=True)
         os.mkdir('out/tmp')
 
-    def get_avg_change(self):
+    def get_avg_max_change(self):
         new_image = tf.squeeze(self.model.generator.get_gen_image())
         self.prev_image = self.curr_image
         self.curr_image = new_image
@@ -28,18 +28,20 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         b = tf.cast(self.curr_image, tf.float32)
         delta = tf.reduce_mean(tf.math.abs(b - a), axis=-1)
         avg_change = tf.reduce_mean(delta)
+        max_change = tf.reduce_max(delta)
 
-        return avg_change
+        return avg_change, max_change
 
     def on_train_begin(self, logs=None):
         self.prev_image = tf.squeeze(self.model.generator.get_gen_image())
         self.curr_image = tf.squeeze(self.model.generator.get_gen_image())
 
     def on_epoch_end(self, epoch, logs=None):
-        avg_change = self.get_avg_change()
+        avg_change, max_change = self.get_avg_max_change()
         if logs is not None:
-            logs['delta'] = avg_change
-        logging.info(f'average pixel change: {avg_change:.3f}')
+            logs['avg_change'] = avg_change
+            logs['max_change'] = max_change
+        logging.info(f'pixel change: {avg_change:.3f} avg, {max_change:.3f} max')
         tf.summary.scalar('average pixel change', data=avg_change, step=epoch)
         tf.io.write_file(f'out/tmp/{epoch}.jpg', tf.io.encode_jpeg(self.curr_image))
 
