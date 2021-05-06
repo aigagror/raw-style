@@ -67,7 +67,7 @@ def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out, input_name
     return x
 
 
-def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True, dropout=0, lrelu=0.2,
+def make_discriminator(input_shape, disc_model, disc_layers, head_layers, apply_spectral_norm=True, dropout=0, lrelu=0.2,
                        standardize_out=False):
     input = tf.keras.Input(input_shape[1:])
     x = StandardizeRGB()(input)
@@ -85,10 +85,9 @@ def make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=True
     disc_model = disc_model_fn(input_tensor=x)
 
     # Get layer outputs
-    nlayers = 0
-    outputs = [attach_disc_head(disc_model.get_layer(layer).output, nlayers, dropout, lrelu, standardize_out,
+    outputs = [attach_disc_head(disc_model.get_layer(layer).output, head_layers, dropout, lrelu, standardize_out,
                                 input_name=layer)
-               for layer in layers]
+               for layer in disc_layers]
     discriminator = tf.keras.Model(disc_model.input, outputs, name='discriminator')
 
     # Apply spectral norm to linear layers

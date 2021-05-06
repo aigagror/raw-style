@@ -19,6 +19,7 @@ flags.DEFINE_enum('disc_model', 'KarrasDisc', ['KarrasDisc', '256KarrasDisc', 'V
                   'discriminator model')
 flags.DEFINE_list('disc_layers', [f'block{i}_lrelu1' for i in range(1, 4)],
                   'names of the layers to use as output for the style features')
+flags.DEFINE_integer('head_layers', 0, 'number of hidden layers for each discriminator head')
 flags.DEFINE_bool('standardize_out', False, 'standardize outputs of the discriminator')
 flags.DEFINE_enum('disc_opt', 'lamb', ['sgd', 'lamb'], 'discriminator optimizer')
 flags.DEFINE_float('disc_lr', 1e-2, 'discriminator learning rate')
@@ -68,8 +69,8 @@ def main(argv):
     image_shape = tf.shape(style_image)
 
     # Make the style model
-    discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.spectral_norm,
-                                       FLAGS.dropout, FLAGS.lrelu, FLAGS.standardize_out)
+    discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.head_layers,
+                                       FLAGS.spectral_norm, FLAGS.dropout, FLAGS.lrelu, FLAGS.standardize_out)
     logging.info(f'disc layers: {FLAGS.disc_layers}')
     discriminator.summary()
 
