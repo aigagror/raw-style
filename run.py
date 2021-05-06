@@ -11,7 +11,7 @@ from utils import ImageChangeCallback, load_style_image
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_integer('epochs', 100, 'epochs')
+flags.DEFINE_integer('epochs', 10, 'epochs')
 flags.DEFINE_integer('steps_per_epoch', 1000, 'steps_per_epoch')
 flags.DEFINE_integer('steps_exec', None, 'steps per execution')
 
