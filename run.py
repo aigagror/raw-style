@@ -28,7 +28,7 @@ flags.DEFINE_enum('gen_model', None, ['KarrasGen', 'SmallKarrasGen', 'TinyKarras
 flags.DEFINE_float('gen_lr', 1e-2, 'generated image learning rate')
 flags.DEFINE_float('gen_wd', 0, 'generator weight decay. should only be used if using DeepImageGenerator')
 flags.DEFINE_integer('gen_start', 0, 'delay the optimization of the generated image by [gen_start] epochs')
-flags.DEFINE_multi_integer('gen_decay', 0,
+flags.DEFINE_multi_integer('gen_decay', [],
                            'decay the learning rate of the generation optimizer by 0.1 at the given step')
 flags.DEFINE_bool('debug_g_grad', False,
                   'debug the gradient of the generated image by examining the average gradients of the generator loss w.r.t to the discriminator layers')
