@@ -33,14 +33,13 @@ class StyleModel(tf.keras.Model):
 
             # Discriminator
             if isinstance(logits, list):
-                d_acc = [self._disc_bce_acc(l) for l in logits]
+                d_accs = [self._disc_bce_acc(l) for l in logits]
                 d_loss = [self._disc_bce_loss(l) for l in logits]
 
-                d_acc = tf.reduce_mean(d_acc)
                 d_loss = tf.reduce_sum(d_loss)
             else:
                 d_loss = self._disc_bce_loss(logits)
-                d_acc = self._disc_bce_acc(logits)
+                d_accs = [self._disc_bce_acc(logits)]
 
             # Generation loss
             if isinstance(logits, list):
@@ -50,7 +49,9 @@ class StyleModel(tf.keras.Model):
                 g_loss = self._gen_bce_loss(logits)
 
         # Metrics
-        metrics = {'d_acc': d_acc, 'd_loss': d_loss, 'g_loss': g_loss}
+        metrics = {'d_loss': d_loss, 'g_loss': g_loss}
+        for i, acc in enumerate(d_accs, 1):
+            metrics[f'd{i}'] = acc
 
         # Optimize generator
         g_grad = tape.gradient(g_loss, self.generator.trainable_weights)
