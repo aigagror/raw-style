@@ -24,6 +24,15 @@ class StandardizeFeats(tf.keras.layers.BatchNormalization):
         super().__init__(scale=False, center=False, momentum=0)
 
 
+class Preprocess(tf.keras.layers.Layer):
+    def __init__(self, preprocess_fn, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.preprocess = preprocess_fn
+
+    def call(self, inputs, **kwargs):
+        return self.preprocess(inputs)
+
+
 class MeasureFeats(tf.keras.layers.Layer):
     def call(self, inputs, *args, **kwargs):
         norms = tf.norm(inputs, axis=-1)

@@ -22,10 +22,9 @@ class TestGenerator(absltest.TestCase):
         tf.debugging.assert_equal(tf.cast(starry_night, tf.uint8), generator.get_gen_image())
 
     def test_deep_image_generator(self):
-        generator = make_generator([1, 512, 512, 3], gen_path=None, gen_model='TinyKarrasGen')
-        generator.summary()
+        generator = make_generator([1, 8, 8, 3], gen_path=None, gen_model='TinyKarrasGen')
         self.assertIsInstance(generator, DeepImageGenerator)
-        tf.debugging.assert_shapes([(generator.get_gen_image(), [1, 512, 512, 3])])
+        tf.debugging.assert_shapes([(generator.get_gen_image(), [1, 8, 8, 3])])
 
         # Check that it satisfies RGB range
         gen_image = generator.get_gen_image()

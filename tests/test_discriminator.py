@@ -67,7 +67,7 @@ class TestDiscriminator(absltest.TestCase):
         layers = ['re_lu']
         for spectral_norm in [False, True]:
             tf.keras.backend.clear_session()
-            discriminator = make_discriminator(input_shape, disc_model, layers, spectral_norm)
+            discriminator = make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=spectral_norm)
 
             num_batch_norms, num_no_batch_norms = 0, 0
             for layer in discriminator.layers:

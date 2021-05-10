@@ -6,6 +6,7 @@ from absl import logging, flags, app
 
 from discriminator import make_discriminator
 from generator import make_generator
+from metrics import assess_gen_style, StyleMetricCallback
 from style import make_and_compile_style_model
 from utils import ImageChangeCallback, load_style_image
 
@@ -34,7 +35,8 @@ flags.DEFINE_multi_integer('gen_decay', [],
 flags.DEFINE_bool('debug_g_grad', False,
                   'debug the gradient of the generated image by examining the average gradients of the generator loss w.r.t to the discriminator layers')
 
-flags.DEFINE_bool('spectral_norm', False, 'apply spectral normalization to all linear layers in the discriminator model')
+flags.DEFINE_bool('spectral_norm', False,
+                  'apply spectral normalization to all linear layers in the discriminator model')
 flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras models are affected')
 flags.DEFINE_float('noise', 0, 'the amount of uniform noise to add to the images during train to prevent overfitting')
 flags.DEFINE_float('lrelu', 0.2, 'Leaky ReLU parameter')
@@ -45,7 +47,8 @@ def train(sc_model, style_image):
 
     shutil.rmtree('out/logs', ignore_errors=True)
     callbacks = [ImageChangeCallback(),
-                 tf.keras.callbacks.TensorBoard(log_dir='out/logs', histogram_freq=1, write_graph=False)]
+                 tf.keras.callbacks.TensorBoard(log_dir='out/logs', histogram_freq=1, write_graph=False),
+                 StyleMetricCallback(style_image)]
     ds = tf.data.Dataset.from_tensor_slices([style_image])
 
     try:
@@ -61,8 +64,16 @@ def train(sc_model, style_image):
 
 
 def main(argv):
-    del argv  # Unused
     logging.set_verbosity('info')
+
+    # Other commands?
+    if len(argv) > 1:
+        command = argv[1].lower()
+        if command == 'assess':
+            assess_gen_style(FLAGS.gen_path, FLAGS.image_size)
+        else:
+            raise ValueError(f'unknown command: {command}')
+        exit()
 
     # Load the images
     style_image = load_style_image()

@@ -12,8 +12,8 @@ flags.DEFINE_integer('image_size', 512, 'image size')
 
 
 class ImageChangeCallback(tf.keras.callbacks.Callback):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
         file_writer = tf.summary.create_file_writer('out/logs/train')
         file_writer.set_as_default()
         shutil.rmtree('out/tmp', ignore_errors=True)
