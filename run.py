@@ -6,9 +6,9 @@ from absl import logging, flags, app
 
 from discriminator import make_discriminator
 from generator import make_generator
-from metrics import assess_gen_style, StyleMetricCallback
+from metrics import assess_gen_style, StyleMetricCallback, ImageChangeCallback
 from style import make_and_compile_style_model
-from utils import ImageChangeCallback, load_style_image
+from utils import load_style_image
 
 FLAGS = flags.FLAGS
 

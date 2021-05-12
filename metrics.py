@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import tensorflow as tf
 import tensorflow_probability as tfp
 from absl import logging
@@ -85,3 +88,38 @@ def assess_gen_style(gen_path, image_size):
     logging.info('=' * 50)
     logging.info(f'{q1:.3} mean, {q2:.3} covariance, {q3:.3} skewness')
     logging.info('=' * 50)
+
+
+class ImageChangeCallback(tf.keras.callbacks.Callback):
+    def __init__(self):
+        super().__init__()
+        file_writer = tf.summary.create_file_writer('out/logs/train')
+        file_writer.set_as_default()
+        shutil.rmtree('out/tmp', ignore_errors=True)
+        os.mkdir('out/tmp')
+
+    def get_avg_max_change(self):
+        new_image = tf.squeeze(self.model.generator.get_gen_image())
+        self.prev_image = self.curr_image
+        self.curr_image = new_image
+
+        a = tf.cast(self.prev_image, tf.float32)
+        b = tf.cast(self.curr_image, tf.float32)
+        delta = tf.reduce_mean(tf.math.abs(b - a), axis=-1)
+        avg_change = tf.reduce_mean(delta)
+        max_change = tf.reduce_max(delta)
+
+        return avg_change, max_change
+
+    def on_train_begin(self, logs=None):
+        self.prev_image = tf.squeeze(self.model.generator.get_gen_image())
+        self.curr_image = tf.squeeze(self.model.generator.get_gen_image())
+
+    def on_epoch_end(self, epoch, logs=None):
+        avg_change, max_change = self.get_avg_max_change()
+        if logs is not None:
+            logs['avg_change'] = avg_change
+            logs['max_change'] = max_change
+        logging.info(f'pixel change: {avg_change:.3f} avg, {max_change:.3f} max')
+        tf.summary.scalar('average pixel change', data=avg_change, step=epoch)
+        tf.io.write_file(f'out/tmp/{epoch}.jpg', tf.io.encode_jpeg(self.curr_image))
