@@ -24,6 +24,9 @@ def get_moments(feats, epsilon):
 class StyleMetricCallback(tf.keras.callbacks.Callback):
     def __init__(self, style_image, feat_model='vgg19'):
         super().__init__()
+        file_writer = tf.summary.create_file_writer('out/logs/train')
+        file_writer.set_as_default()
+
         self.epsilon = 1e-7
         input_shape = tf.shape(style_image)[1:]
         input, outputs = tf.keras.Input(input_shape), []
@@ -72,6 +75,9 @@ class StyleMetricCallback(tf.keras.callbacks.Callback):
             logs['q3'] = q3
 
         logging.info(f'{q1:.3} q1, {q2:.3} q2, {q3:.3} q3')
+        tf.summary.scalar('q1', data=q1, step=epoch)
+        tf.summary.scalar('q2', data=q2, step=epoch)
+        tf.summary.scalar('q3', data=q3, step=epoch)
 
 
 def assess_gen_style(gen_path, image_size):
