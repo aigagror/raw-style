@@ -51,7 +51,7 @@ class StyleModel(tf.keras.Model):
         # Metrics
         metrics = {'d_loss': d_loss, 'g_loss': g_loss}
         for i, acc in enumerate(d_accs, 1):
-            metrics[f'd{i}'] = acc
+            metrics[f'd{i}_acc'] = acc
 
         # Optimize generator
         g_grad = tape.gradient(g_loss, self.generator.trainable_weights)
