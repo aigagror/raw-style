@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.python.keras.applications import resnet
 from tensorflow.python.keras.utils import layer_utils
 
-from layers import SNConv2D, StandardizeRGB, NoBatchNorm, MeasureFeats, StandardizeFeats
+from layers import SNConv2D, StandardizeRGB, NoBatchNorm, MeasureFeats
 
 
 def make_resnet152v2(input_tensor):
@@ -44,12 +44,8 @@ def make_karras_discriminator(input_tensor, hdims=[2 ** i for i in range(4, 12)]
     return tf.keras.Model(layer_utils.get_source_inputs(input_tensor), x)
 
 
-def attach_disc_head(input, nlayers, dropout, lrelu, standardize_out, input_name):
+def attach_disc_head(input, nlayers, dropout, lrelu, input_name):
     x = input
-
-    # Standardize input?
-    if standardize_out:
-        x = StandardizeFeats()(x)
 
     # Hidden layers
     for _ in range(nlayers):
@@ -86,8 +82,7 @@ def make_discriminator(input_shape, disc_model, disc_layers, head_layers=0, appl
     disc_model = disc_model_fn(input_tensor=x)
 
     # Get layer outputs
-    outputs = [attach_disc_head(disc_model.get_layer(layer).output, head_layers, dropout, lrelu, standardize_out,
-                                input_name=layer)
+    outputs = [attach_disc_head(disc_model.get_layer(layer).output, head_layers, dropout, lrelu, input_name=layer)
                for layer in disc_layers]
     discriminator = tf.keras.Model(disc_model.input, outputs, name='discriminator')
 
@@ -97,7 +92,6 @@ def make_discriminator(input_shape, disc_model, disc_layers, head_layers=0, appl
                                                      custom_objects={'Conv2D': SNConv2D,
                                                                      'StandardizeRGB': StandardizeRGB,
                                                                      'BatchNormalization': NoBatchNorm,
-                                                                     'MeasureFeats': MeasureFeats,
-                                                                     'StandardizeFeats': StandardizeFeats})
+                                                                     'MeasureFeats': MeasureFeats})
 
     return discriminator

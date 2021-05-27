@@ -3,7 +3,7 @@ import tensorflow_addons as tfa
 from absl.testing import absltest
 
 from discriminator import make_discriminator
-from layers import NoBatchNorm, StandardizeFeats
+from layers import NoBatchNorm
 
 
 class TestDiscriminator(absltest.TestCase):
@@ -71,7 +71,7 @@ class TestDiscriminator(absltest.TestCase):
 
             num_batch_norms, num_no_batch_norms = 0, 0
             for layer in discriminator.layers:
-                if isinstance(layer, tf.keras.layers.BatchNormalization) and not isinstance(layer, StandardizeFeats):
+                if isinstance(layer, tf.keras.layers.BatchNormalization):
                     num_batch_norms += 1
                 if isinstance(layer, NoBatchNorm):
                     num_no_batch_norms += 1
@@ -82,19 +82,6 @@ class TestDiscriminator(absltest.TestCase):
             else:
                 self.assertGreater(num_batch_norms, 0)
                 self.assertEqual(num_no_batch_norms, 0)
-
-    def test_standardize_out(self):
-        input_shape = [1, 8, 8, 3]
-        disc_model = 'KarrasDisc'
-        layers = ['block1_lrelu1']
-        for standardize_out in [False, True]:
-            discriminator = make_discriminator(input_shape, disc_model, layers, standardize_out=standardize_out)
-            found_standard_feats = False
-            for layer in discriminator.layers:
-                if isinstance(layer, StandardizeFeats):
-                    found_standard_feats = True
-
-            self.assertEqual(found_standard_feats, standardize_out)
 
 
 if __name__ == '__main__':
