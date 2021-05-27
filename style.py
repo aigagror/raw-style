@@ -30,23 +30,18 @@ class StyleModel(tf.keras.Model):
             images = tf.concat([style_image, gen_image], axis=0)
             images = add_noise(images, self.noise)
             logits = self.discriminator(images, training=True)
+            if not isinstance(logits, list):
+                logits = [logits]
 
-            # Discriminator
-            if isinstance(logits, list):
-                d_accs = [self._disc_bce_acc(l) for l in logits]
-                d_loss = [self._disc_bce_loss(l) for l in logits]
+            # Discriminator accuracy and loss
+            d_accs = [self._disc_bce_acc(l) for l in logits]
+            d_loss = [self._disc_bce_loss(l) for l in logits]
 
-                d_loss = tf.reduce_sum(d_loss)
-            else:
-                d_loss = self._disc_bce_loss(logits)
-                d_accs = [self._disc_bce_acc(logits)]
+            d_loss = tf.reduce_sum(d_loss)
 
             # Generation loss
-            if isinstance(logits, list):
-                g_loss = [self._gen_bce_loss(l) for l in logits]
-                g_loss = tf.reduce_sum(g_loss)
-            else:
-                g_loss = self._gen_bce_loss(logits)
+            g_loss = [self._gen_bce_loss(l) for l in logits]
+            g_loss = tf.reduce_sum(g_loss)
 
         # Metrics
         metrics = {'d_loss': d_loss, 'g_loss': g_loss}

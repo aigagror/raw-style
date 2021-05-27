@@ -20,7 +20,7 @@ class TestTrainSteps(absltest.TestCase):
         style_model = self.make_style_model(gen_image)
 
         metrics = style_model.train_step(style_image)
-        d_acc, d_loss, g_loss = metrics['d1'], metrics['d_loss'], metrics['g_loss']
+        d_acc, d_loss, g_loss = metrics['d1_acc'], metrics['d_loss'], metrics['g_loss']
         tf.debugging.assert_equal(d_acc, tf.ones_like(d_acc))
         tf.debugging.assert_near(d_loss, -tf.math.log(tf.sigmoid(0.5)) - tf.math.log(1 - tf.sigmoid(-0.5)))
         tf.debugging.assert_near(g_loss, -tf.math.log(tf.sigmoid(-0.5)))
@@ -30,7 +30,7 @@ class TestTrainSteps(absltest.TestCase):
         style_model = self.make_style_model(gen_image)
 
         metrics = style_model.train_step(style_image)
-        d_acc, d_loss, g_loss = metrics['d1'], metrics['d_loss'], metrics['g_loss']
+        d_acc, d_loss, g_loss = metrics['d1_acc'], metrics['d_loss'], metrics['g_loss']
         tf.debugging.assert_equal(d_acc, 0.5 * tf.ones_like(d_acc))
         tf.debugging.assert_near(d_loss, -tf.math.log(tf.sigmoid(0.0)) - tf.math.log(1 - tf.sigmoid(-0.0)))
         tf.debugging.assert_near(g_loss, -tf.math.log(tf.sigmoid(0.0)))
@@ -40,7 +40,7 @@ class TestTrainSteps(absltest.TestCase):
         style_model = self.make_style_model(gen_image)
 
         metrics = style_model.train_step(style_image)
-        d_acc, d_loss, g_loss = metrics['d1'], metrics['d_loss'], metrics['g_loss']
+        d_acc, d_loss, g_loss = metrics['d1_acc'], metrics['d_loss'], metrics['g_loss']
         tf.debugging.assert_equal(d_acc, tf.zeros_like(d_acc))
         tf.debugging.assert_near(d_loss, -tf.math.log(tf.sigmoid(-0.5)) - tf.math.log(1 - tf.sigmoid(0.5)))
         tf.debugging.assert_near(g_loss, -tf.math.log(tf.sigmoid(0.5)))
