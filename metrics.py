@@ -105,12 +105,12 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         os.mkdir('out/tmp')
 
     def get_avg_max_change(self):
-        new_image = self.model.generator.get_gen_image()[0]
-        self.prev_image = self.curr_image
-        self.curr_image = new_image
+        new_image = self.model.generator.get_gen_image()
+        self.prev_image_batch = self.curr_image_batch
+        self.curr_image_batch = new_image
 
-        a = tf.cast(self.prev_image, tf.float32)
-        b = tf.cast(self.curr_image, tf.float32)
+        a = tf.cast(self.prev_image_batch, tf.float32)
+        b = tf.cast(self.curr_image_batch, tf.float32)
         delta = tf.reduce_mean(tf.math.abs(b - a), axis=-1)
         avg_change = tf.reduce_mean(delta)
         max_change = tf.reduce_max(delta)
@@ -118,8 +118,8 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         return avg_change, max_change
 
     def on_train_begin(self, logs=None):
-        self.prev_image = self.model.generator.get_gen_image()[0]
-        self.curr_image = self.model.generator.get_gen_image()[0]
+        self.prev_image_batch = self.model.generator.get_gen_image()
+        self.curr_image_batch = self.model.generator.get_gen_image()
 
     def on_epoch_end(self, epoch, logs=None):
         avg_change, max_change = self.get_avg_max_change()
@@ -128,4 +128,5 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
             logs['max_change'] = max_change
         logging.info(f'pixel change: {avg_change:.3f} avg, {max_change:.3f} max')
         tf.summary.scalar('average pixel change', data=avg_change, step=epoch)
-        tf.io.write_file(f'out/tmp/{epoch}.jpg', tf.io.encode_jpeg(self.curr_image))
+        for i, image in enumerate(self.curr_image_batch):
+            tf.io.write_file(f'out/tmp/{epoch}_{i}.jpg', tf.io.encode_jpeg(image))
