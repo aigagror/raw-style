@@ -129,4 +129,4 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         logging.info(f'pixel change: {avg_change:.3f} avg, {max_change:.3f} max')
         tf.summary.scalar('average pixel change', data=avg_change, step=epoch)
         for i, image in enumerate(self.curr_image_batch):
-            tf.io.write_file(f'out/tmp/{epoch}_{i}.jpg', tf.io.encode_jpeg(image))
+            tf.io.write_file(f'out/tmp/{epoch + 1}_{i}.jpg', tf.io.encode_jpeg(image))
