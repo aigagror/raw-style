@@ -101,7 +101,7 @@ def main(argv):
 
     # Save the generated image
     out_path = 'out/gen.jpg'
-    Image.fromarray(tf.squeeze(style_model.generator.get_gen_image()).numpy()).save(out_path)
+    Image.fromarray(style_model.generator.get_gen_image()[0].numpy()).save(out_path)
     logging.info(f"saved generated image to '{out_path}'")
 
 
