@@ -13,7 +13,7 @@ class StyleModel(tf.keras.Model):
         self.generator = generator
         self.noise = noise
         self.debug_g_grad = debug_g_grad
-        self.bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE)
+        self.bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
 
     def compile(self, disc_opt, gen_opt, *args, **kwargs):
         super().compile(gen_opt, *args, **kwargs)
@@ -85,7 +85,7 @@ class StyleModel(tf.keras.Model):
         return list(style_logits), list(gen_logits)
 
     def _gen_bce_loss(self, gen_logits):
-        g_loss = self.bce_loss(tf.ones_like(gen_logits), gen_logits)
+        g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(gen_logits), gen_logits))
         return g_loss
 
     def _disc_bce_acc(self, style_logits, gen_logits):
@@ -96,8 +96,8 @@ class StyleModel(tf.keras.Model):
         return real_acc, gen_acc
 
     def _disc_bce_loss(self, style_logits, gen_logits):
-        real_loss = self.bce_loss(tf.ones_like(style_logits), style_logits)
-        gen_loss = self.bce_loss(tf.zeros_like(gen_logits), gen_logits)
+        real_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(style_logits), style_logits))
+        gen_loss = tf.reduce_mean(self.bce_loss(tf.zeros_like(gen_logits), gen_logits))
         d_loss = real_loss + gen_loss
         return d_loss
 
