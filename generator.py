@@ -55,7 +55,7 @@ class DeepImageGenerator(ImageGenerator):
 
 
 def make_karras_generator(output_shape, start_hdim=15, max_dim=512, dropout=0, lrelu=0.2):
-    input_shape = [1, 1, 1, min(2 ** start_hdim, max_dim)]
+    input_shape = [output_shape[0], 1, 1, min(2 ** start_hdim, max_dim)]
     seed = tf.Variable(tf.random.normal(input_shape), trainable=True, name='seed')
 
     input = tf.keras.Input(input_shape[1:])
@@ -72,7 +72,7 @@ def make_karras_generator(output_shape, start_hdim=15, max_dim=512, dropout=0, l
         x = tf.keras.layers.LeakyReLU(lrelu, name=f'gen_block{i + 1}_lrelu2')(x)
 
         if x.shape[1] == output_shape[1]:
-            x = tf.keras.layers.Conv2D(3, 1, name='to_rgb', activation='sigmoid')(x)
+            x = tf.keras.layers.Conv2D(output_shape[-1], 1, name='to_rgb', activation='sigmoid')(x)
             x = x * 255
             break
         else:

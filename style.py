@@ -26,21 +26,16 @@ class StyleModel(tf.keras.Model):
 
     def train_step(self, style_image):
         with tf.GradientTape(persistent=True) as tape:
-            gen_image = self.generator(style_image, training=True)
-            images = tf.concat([style_image, gen_image], axis=0)
-            images = add_noise(images, self.noise)
-            logits = self.discriminator(images, training=True)
-            if not isinstance(logits, list):
-                logits = [logits]
+            style_logits, gen_logits = self.compute_logits(style_image)
 
             # Discriminator accuracy and loss
-            d_accs = [self._disc_bce_acc(l) for l in logits]
-            d_loss = [self._disc_bce_loss(l) for l in logits]
+            d_accs = [self._disc_bce_acc(sl, gl) for sl, gl in zip(style_logits, gen_logits)]
+            d_loss = [self._disc_bce_loss(sl, gl) for sl, gl in zip(style_logits, gen_logits)]
 
             d_loss = tf.reduce_sum(d_loss)
 
             # Generation loss
-            g_loss = [self._gen_bce_loss(l) for l in logits]
+            g_loss = [self._gen_bce_loss(gl) for gl in gen_logits]
             g_loss = tf.reduce_sum(g_loss)
 
         # Metrics
@@ -72,13 +67,26 @@ class StyleModel(tf.keras.Model):
 
         return metrics
 
-    def _gen_bce_loss(self, logits):
-        gen_logits = logits[1]
+    def compute_logits(self, style_image):
+        gen_image = self.generator(style_image, training=True)
+        images = tf.concat([style_image, gen_image], axis=0)
+        images = add_noise(images, self.noise)
+        logits = self.discriminator(images, training=True)
+        if not isinstance(logits, list):
+            logits = [logits]
+        style_logits, gen_logits = self._split_logits(logits, style_batch_size=tf.shape(style_image)[0])
+        return style_logits, gen_logits
+
+    def _split_logits(self, logits, style_batch_size):
+        logits = [(l[:style_batch_size], l[style_batch_size:]) for l in logits]
+        style_logits, gen_logits = zip(*logits)
+        return list(style_logits), list(gen_logits)
+
+    def _gen_bce_loss(self, gen_logits):
         g_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(gen_logits), gen_logits))
         return g_loss
 
-    def _disc_bce_acc(self, logits):
-        style_logits, gen_logits = logits[0], logits[1]
+    def _disc_bce_acc(self, style_logits, gen_logits):
         real_acc = tf.reduce_mean(
             tf.keras.metrics.binary_accuracy(tf.ones_like(style_logits), style_logits, threshold=0))
         gen_acc = tf.reduce_mean(
@@ -86,8 +94,7 @@ class StyleModel(tf.keras.Model):
         d_acc = 0.5 * real_acc + 0.5 * gen_acc
         return d_acc
 
-    def _disc_bce_loss(self, logits):
-        style_logits, gen_logits = logits[0], logits[1]
+    def _disc_bce_loss(self, style_logits, gen_logits):
         real_loss = tf.reduce_mean(self.bce_loss(tf.ones_like(style_logits), style_logits))
         gen_loss = tf.reduce_mean(self.bce_loss(tf.zeros_like(gen_logits), gen_logits))
         d_loss = real_loss + gen_loss

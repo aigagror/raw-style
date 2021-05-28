@@ -12,6 +12,7 @@ from utils import load_style_image
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_integer('batch_size', 1, 'batch size')
 flags.DEFINE_integer('epochs', 10, 'epochs')
 flags.DEFINE_integer('steps_per_epoch', 1000, 'steps_per_epoch')
 flags.DEFINE_integer('steps_exec', None, 'steps per execution')
@@ -76,7 +77,7 @@ def main(argv):
         exit()
 
     # Load the images
-    style_image = load_style_image()
+    style_image = load_style_image(FLAGS.batch_size)
     image_shape = tf.shape(style_image)
 
     # Make the style model

@@ -17,7 +17,7 @@ def get_moments(feats, epsilon):
     var = [tf.math.reduce_variance(feats, axis=[0, 1, 2], keepdims=True) for feats in feats]
     norm_feats = [(f - m) * tf.math.rsqrt(v + epsilon) for f, m, v in zip(feats, m1, var)]
     m3 = [tf.reduce_mean(z ** 3, axis=[0, 1, 2]) for z in norm_feats]
-    m1 = [tf.squeeze(m1, [0, 1, 2]) for m1 in m1]
+    m1 = [tf.squeeze(m, [0, 1, 2]) for m in m1]
     return m1, com2, m3
 
 
@@ -81,7 +81,7 @@ class StyleMetricCallback(tf.keras.callbacks.Callback):
 
 
 def assess_gen_style(gen_path, image_size):
-    style_image = load_style_image()
+    style_image = load_style_image(batch_size=1)
     if gen_path is None:
         raise ValueError("gen_path must be specified under the 'assess' command")
     logging.info(f"assessing style quality from '{gen_path}'")
@@ -105,7 +105,7 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         os.mkdir('out/tmp')
 
     def get_avg_max_change(self):
-        new_image = tf.squeeze(self.model.generator.get_gen_image())
+        new_image = self.model.generator.get_gen_image()[0]
         self.prev_image = self.curr_image
         self.curr_image = new_image
 
@@ -118,8 +118,8 @@ class ImageChangeCallback(tf.keras.callbacks.Callback):
         return avg_change, max_change
 
     def on_train_begin(self, logs=None):
-        self.prev_image = tf.squeeze(self.model.generator.get_gen_image())
-        self.curr_image = tf.squeeze(self.model.generator.get_gen_image())
+        self.prev_image = self.model.generator.get_gen_image()[0]
+        self.curr_image = self.model.generator.get_gen_image()[0]
 
     def on_epoch_end(self, epoch, logs=None):
         avg_change, max_change = self.get_avg_max_change()
