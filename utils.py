@@ -16,11 +16,11 @@ def load_resize_batch_image(image_path, image_size):
     return image
 
 
-def load_style_image(batch_size):
+def load_style_image():
     style_image = load_resize_batch_image(FLAGS.style_path, FLAGS.image_size)
     logging.info(f"loaded style image from '{FLAGS.style_path}'")
 
-    return tf.repeat(style_image, [batch_size], axis=0)
+    return style_image
 
 
 def add_noise(image, magnitude):

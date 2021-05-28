@@ -77,8 +77,8 @@ def main(argv):
         exit()
 
     # Load the images
-    style_image = load_style_image(FLAGS.batch_size)
-    image_shape = tf.shape(style_image)
+    style_image = load_style_image()
+    image_shape = tf.shape(style_image).numpy()
 
     # Make the style model
     discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.head_layers,
@@ -86,6 +86,8 @@ def main(argv):
     logging.info(f'disc layers: {FLAGS.disc_layers}')
     discriminator.summary()
 
+    # Multiple gen images?
+    image_shape[0] = FLAGS.batch_size
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
     generator.summary()
 

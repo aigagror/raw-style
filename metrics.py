@@ -81,7 +81,7 @@ class StyleMetricCallback(tf.keras.callbacks.Callback):
 
 
 def assess_gen_style(gen_path, image_size):
-    style_image = load_style_image(batch_size=1)
+    style_image = load_style_image()
     if gen_path is None:
         raise ValueError("gen_path must be specified under the 'assess' command")
     logging.info(f"assessing style quality from '{gen_path}'")
