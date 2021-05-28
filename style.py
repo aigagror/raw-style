@@ -40,8 +40,10 @@ class StyleModel(tf.keras.Model):
 
         # Metrics
         metrics = {'d_loss': d_loss, 'g_loss': g_loss}
-        for i, acc in enumerate(d_accs, 1):
-            metrics[f'd{i}_acc'] = acc
+        for i, (real_acc, gen_acc) in enumerate(d_accs, 1):
+            metrics[f'd{i}_acc'] = 0.5 * real_acc + 0.5 * gen_acc
+            metrics[f'd{i}_real'] = real_acc
+            metrics[f'd{i}_gen'] = gen_acc
 
         # Optimize generator
         g_grad = tape.gradient(g_loss, self.generator.trainable_weights)
@@ -91,8 +93,7 @@ class StyleModel(tf.keras.Model):
             tf.keras.metrics.binary_accuracy(tf.ones_like(style_logits), style_logits, threshold=0))
         gen_acc = tf.reduce_mean(
             tf.keras.metrics.binary_accuracy(tf.zeros_like(gen_logits), gen_logits, threshold=0))
-        d_acc = 0.5 * real_acc + 0.5 * gen_acc
-        return d_acc
+        return real_acc, gen_acc
 
     def _disc_bce_loss(self, style_logits, gen_logits):
         real_loss = self.bce_loss(tf.ones_like(style_logits), style_logits)
