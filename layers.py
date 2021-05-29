@@ -14,6 +14,36 @@ class SNConv2D(tfa.layers.SpectralNormalization):
         return cls(conv, name=conv.name)
 
 
+class NoisyConv(tf.keras.layers.Conv2D):
+    def call(self, inputs):
+        x = super().call(inputs)
+        return x + tf.random.normal(tf.shape(x), stddev=self.std)
+
+
+class NoisyConvOne(NoisyConv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.std = 1
+
+
+class NoisyConvHalf(NoisyConv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.std = 0.5
+
+
+class NoisyConvQuarter(NoisyConv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.std = 0.25
+
+
+class NoisyConvTenth(NoisyConv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.std = 0.1
+
+
 class NoBatchNorm(tf.keras.layers.Activation):
     def __init__(self, **kwargs):
         super().__init__('linear')

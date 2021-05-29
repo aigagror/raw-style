@@ -3,7 +3,7 @@ import tensorflow_addons as tfa
 from absl.testing import absltest
 
 from discriminator import make_discriminator
-from layers import NoBatchNorm
+from layers import NoBatchNorm, NoisyConv
 
 
 class TestDiscriminator(absltest.TestCase):
@@ -12,14 +12,26 @@ class TestDiscriminator(absltest.TestCase):
         input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
         layers = ['conv0']
-        for spectral_norm in [True, False]:
-            discriminator = make_discriminator(input_shape, disc_model, layers, spectral_norm)
+        for conv_mod in ['spectral_norm', None]:
+            discriminator = make_discriminator(input_shape, disc_model, layers, conv_mod=conv_mod)
             for layer in discriminator.layers:
                 if hasattr(layer, 'kernel'):
-                    if spectral_norm:
+                    if conv_mod == 'spectral_norm':
                         self.assertIsInstance(layer, tfa.layers.SpectralNormalization)
                     else:
                         self.assertNotIsInstance(layer, tfa.layers.SpectralNormalization)
+
+    def test_noisy_convs(self):
+        input_shape = [1, 8, 8, 3]
+        disc_model = 'KarrasDisc'
+        layers = ['conv0']
+        for conv_mod in ['noisy_conv_1', 'noisy_conv_0.5', 'noisy_conv_0.25', 'noisy_conv_0.1']:
+            discriminator = make_discriminator(input_shape, disc_model, layers, conv_mod=conv_mod)
+            for layer in discriminator.layers:
+                if hasattr(layer, 'kernel'):
+                    self.assertIsInstance(layer, NoisyConv)
+                    std = float(conv_mod.split('_')[-1])
+                    self.assertEqual(std, layer.std)
 
     def test_dropout(self):
         input_shape = [1, 8, 8, 3]
@@ -65,9 +77,9 @@ class TestDiscriminator(absltest.TestCase):
         input_shape = [1, 32, 32, 3]
         disc_model = 'MobileNetV3Small'
         layers = ['re_lu']
-        for spectral_norm in [False, True]:
+        for conv_mod in [None, 'spectral_norm']:
             tf.keras.backend.clear_session()
-            discriminator = make_discriminator(input_shape, disc_model, layers, apply_spectral_norm=spectral_norm)
+            discriminator = make_discriminator(input_shape, disc_model, layers, conv_mod=conv_mod)
 
             num_batch_norms, num_no_batch_norms = 0, 0
             for layer in discriminator.layers:
@@ -76,7 +88,7 @@ class TestDiscriminator(absltest.TestCase):
                 if isinstance(layer, NoBatchNorm):
                     num_no_batch_norms += 1
 
-            if spectral_norm:
+            if conv_mod:
                 self.assertEqual(num_batch_norms, 0)
                 self.assertGreater(num_no_batch_norms, 0)
             else:

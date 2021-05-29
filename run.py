@@ -35,10 +35,10 @@ flags.DEFINE_multi_integer('gen_decay', [],
 flags.DEFINE_bool('debug_g_grad', False,
                   'debug the gradient of the generated image by examining the average gradients of the generator loss w.r.t to the discriminator layers')
 
-flags.DEFINE_bool('spectral_norm', False,
-                  'apply spectral normalization to all linear layers in the discriminator model')
+flags.DEFINE_enum('conv_mod', None, ['spectral_norm', 'noisy_conv_1', 'noisy_conv_0.5', 'noisy_conv_0.25', 'noisy_conv_0.1'],
+                  'modification to the convolution layers')
 flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras models are affected')
-flags.DEFINE_float('noise', 0, 'the amount of uniform noise to add to the images during train to prevent overfitting')
+flags.DEFINE_float('image_noise', 0, 'the amount of uniform noise to add to the images during train to prevent overfitting')
 flags.DEFINE_float('lrelu', 0.2, 'Leaky ReLU parameter')
 
 
@@ -81,7 +81,7 @@ def main(argv):
 
     # Make the style model
     discriminator = make_discriminator(image_shape, FLAGS.disc_model, FLAGS.disc_layers, FLAGS.head_layers,
-                                       FLAGS.spectral_norm, FLAGS.dropout, FLAGS.lrelu)
+                                       FLAGS.conv_mod, FLAGS.dropout, FLAGS.lrelu)
     logging.info(f'disc layers: {FLAGS.disc_layers}')
     discriminator.summary()
 
@@ -90,7 +90,7 @@ def main(argv):
     generator = make_generator(image_shape, FLAGS.gen_path, FLAGS.gen_model, FLAGS.dropout, FLAGS.lrelu)
     generator.summary()
 
-    style_model = make_and_compile_style_model(discriminator, generator, FLAGS.noise, FLAGS.debug_g_grad,
+    style_model = make_and_compile_style_model(discriminator, generator, FLAGS.image_noise, FLAGS.debug_g_grad,
                                                FLAGS.disc_opt, FLAGS.disc_lr, FLAGS.disc_wd,
                                                FLAGS.gen_lr, FLAGS.gen_wd, FLAGS.gen_start, FLAGS.gen_decay,
                                                FLAGS.steps_exec)
