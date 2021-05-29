@@ -64,8 +64,7 @@ def attach_disc_head(input, nlayers, dropout, lrelu, input_name):
 
 
 def make_discriminator(input_shape, disc_model, disc_layers, head_layers=0, apply_spectral_norm=True, dropout=0,
-                       lrelu=0.2,
-                       standardize_out=False):
+                       lrelu=0.2):
     input = tf.keras.Input(input_shape[1:])
     x = StandardizeRGB()(input)
 
