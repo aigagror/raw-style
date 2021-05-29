@@ -5,7 +5,7 @@ from tensorflow.python.keras.applications import resnet
 from tensorflow.python.keras.utils import layer_utils
 
 from layers import SNConv2D, StandardizeRGB, NoBatchNorm, MeasureFeats, NoisyConvOne, NoisyConvHalf, NoisyConvQuarter, \
-    NoisyConvTenth
+    NoisyConvTenth, NoisyConvHundredth
 
 
 def make_resnet152v2(input_tensor):
@@ -99,7 +99,8 @@ def make_discriminator(input_shape, disc_model, disc_layers, head_layers=0, conv
             noisy_conv_dict = {'noisy_conv_1': NoisyConvOne,
                                'noisy_conv_0.5': NoisyConvHalf,
                                'noisy_conv_0.25': NoisyConvQuarter,
-                               'noisy_conv_0.1': NoisyConvTenth}
+                               'noisy_conv_0.1': NoisyConvTenth,
+                               'noisy_conv_0.01': NoisyConvHundredth}
             ConvClass = noisy_conv_dict[conv_mod]
             discriminator = tf.keras.Model().from_config(discriminator.get_config(),
                                                          custom_objects={'Conv2D': ConvClass,

@@ -35,7 +35,7 @@ flags.DEFINE_multi_integer('gen_decay', [],
 flags.DEFINE_bool('debug_g_grad', False,
                   'debug the gradient of the generated image by examining the average gradients of the generator loss w.r.t to the discriminator layers')
 
-flags.DEFINE_enum('conv_mod', None, ['spectral_norm', 'noisy_conv_1', 'noisy_conv_0.5', 'noisy_conv_0.25', 'noisy_conv_0.1'],
+flags.DEFINE_enum('conv_mod', None, ['spectral_norm', 'noisy_conv_1', 'noisy_conv_0.5', 'noisy_conv_0.25', 'noisy_conv_0.1', 'noisy_conv_0.01'],
                   'modification to the convolution layers')
 flags.DEFINE_float('dropout', 0, 'probability that a feature is zero-ed out. only the Karras models are affected')
 flags.DEFINE_float('image_noise', 0, 'the amount of uniform noise to add to the images during train to prevent overfitting')

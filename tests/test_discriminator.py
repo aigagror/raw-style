@@ -25,7 +25,7 @@ class TestDiscriminator(absltest.TestCase):
         input_shape = [1, 8, 8, 3]
         disc_model = 'KarrasDisc'
         layers = ['conv0']
-        for conv_mod in ['noisy_conv_1', 'noisy_conv_0.5', 'noisy_conv_0.25', 'noisy_conv_0.1']:
+        for conv_mod in ['noisy_conv_1', 'noisy_conv_0.5', 'noisy_conv_0.25', 'noisy_conv_0.1', 'noisy_conv_0.01']:
             discriminator = make_discriminator(input_shape, disc_model, layers, conv_mod=conv_mod)
             for layer in discriminator.layers:
                 if hasattr(layer, 'kernel'):

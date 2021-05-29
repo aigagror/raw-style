@@ -43,6 +43,11 @@ class NoisyConvTenth(NoisyConv):
         super().__init__(*args, **kwargs)
         self.std = 0.1
 
+class NoisyConvHundredth(NoisyConv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.std = 0.01
+
 
 class NoBatchNorm(tf.keras.layers.Activation):
     def __init__(self, **kwargs):
